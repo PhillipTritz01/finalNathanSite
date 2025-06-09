@@ -12,7 +12,7 @@
             <div class="container mx-auto px-4">
                 <nav class="py-4">
                     <ul class="flex items-center justify-between space-x-8">
-                        <li><a href="index.html" class="text-gray-800 hover:text-blue-600 transition">Home</a></li>
+                        <li><a href="index.php" class="text-gray-800 hover:text-blue-600 transition">Home</a></li>
                         <li class="relative group">
                             <span class="text-gray-800 cursor-default flex items-center">
                                 Services
@@ -21,16 +21,16 @@
                                 </svg>
                             </span>
                             <ul class="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                                <li><a href="services/photography.html" class="block px-4 py-2 text-gray-800 hover:bg-blue-50">Photography</a></li>
-                                <li><a href="services/cinematography.html" class="block px-4 py-2 text-gray-800 hover:bg-blue-50">Cinematography</a></li>
-                                <li><a href="services/videography.html" class="block px-4 py-2 text-gray-800 hover:bg-blue-50">Videography</a></li>
-                                <li><a href="services/commercial.html" class="block px-4 py-2 text-gray-800 hover:bg-blue-50">Commercial Projects</a></li>
+                                <li><a href="services/photography.php" class="block px-4 py-2 text-gray-800 hover:bg-blue-50">Photography</a></li>
+                                <li><a href="services/cinematography.php" class="block px-4 py-2 text-gray-800 hover:bg-blue-50">Cinematography</a></li>
+                                <li><a href="services/videography.php" class="block px-4 py-2 text-gray-800 hover:bg-blue-50">Videography</a></li>
+                                <li><a href="services/commercial.php" class="block px-4 py-2 text-gray-800 hover:bg-blue-50">Commercial Projects</a></li>
                             </ul>
                         </li>
-                        <li><a href="portfolio.html" class="text-gray-800 hover:text-blue-600 transition">Portfolio</a></li>
-                        <li><a href="about.html" class="text-gray-800 hover:text-blue-600 transition">About</a></li>
-                        <li><a href="contact.html" class="text-gray-800 hover:text-blue-600 transition">Contact</a></li>
-                        <li><a href="booking.html" class="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition">Book a Session</a></li>
+                        <li><a href="portfolio.php" class="text-gray-800 hover:text-blue-600 transition">Portfolio</a></li>
+                        <li><a href="about.php" class="text-gray-800 hover:text-blue-600 transition">About</a></li>
+                        <li><a href="contact.php" class="text-gray-800 hover:text-blue-600 transition">Contact</a></li>
+                        <li><a href="booking.php" class="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition">Book a Session</a></li>
                     </ul>
                 </nav>
             </div>
@@ -130,28 +130,28 @@
                     <div>
                         <h3 class="text-lg font-semibold mb-4">Company</h3>
                         <ul class="space-y-2">
-                            <li><a href="about.html" class="text-gray-400 hover:text-white transition">About Us</a></li>
-                            <li><a href="portfolio.html" class="text-gray-400 hover:text-white transition">Portfolio</a></li>
-                            <li><a href="services.html" class="text-gray-400 hover:text-white transition">Services</a></li>
-                            <li><a href="contact.html" class="text-gray-400 hover:text-white transition">Contact</a></li>
+                            <li><a href="about.php" class="text-gray-400 hover:text-white transition">About Us</a></li>
+                            <li><a href="portfolio.php" class="text-gray-400 hover:text-white transition">Portfolio</a></li>
+                            <li><a href="services.php" class="text-gray-400 hover:text-white transition">Services</a></li>
+                            <li><a href="contact.php" class="text-gray-400 hover:text-white transition">Contact</a></li>
                         </ul>
                     </div>
                     <div>
                         <h3 class="text-lg font-semibold mb-4">Services</h3>
                         <ul class="space-y-2">
-                            <li><a href="services/photography.html" class="text-gray-400 hover:text-white transition">Photography</a></li>
-                            <li><a href="services/cinematography.html" class="text-gray-400 hover:text-white transition">Cinematography</a></li>
-                            <li><a href="services/videography.html" class="text-gray-400 hover:text-white transition">Videography</a></li>
-                            <li><a href="services/commercial.html" class="text-gray-400 hover:text-white transition">Commercial</a></li>
+                            <li><a href="services/photography.php" class="text-gray-400 hover:text-white transition">Photography</a></li>
+                            <li><a href="services/cinematography.php" class="text-gray-400 hover:text-white transition">Cinematography</a></li>
+                            <li><a href="services/videography.php" class="text-gray-400 hover:text-white transition">Videography</a></li>
+                            <li><a href="services/commercial.php" class="text-gray-400 hover:text-white transition">Commercial</a></li>
                         </ul>
                     </div>
                     <div>
                         <h3 class="text-lg font-semibold mb-4">Resources</h3>
                         <ul class="space-y-2">
-                            <li><a href="blog.html" class="text-gray-400 hover:text-white transition">Blog</a></li>
-                            <li><a href="faq.html" class="text-gray-400 hover:text-white transition">FAQ</a></li>
-                            <li><a href="pricing.html" class="text-gray-400 hover:text-white transition">Pricing</a></li>
-                            <li><a href="privacy.html" class="text-gray-400 hover:text-white transition">Privacy Policy</a></li>
+                            <li><a href="blog.php" class="text-gray-400 hover:text-white transition">Blog</a></li>
+                            <li><a href="faq.php" class="text-gray-400 hover:text-white transition">FAQ</a></li>
+                            <li><a href="pricing.php" class="text-gray-400 hover:text-white transition">Pricing</a></li>
+                            <li><a href="privacy.php" class="text-gray-400 hover:text-white transition">Privacy Policy</a></li>
                         </ul>
                     </div>
                     <div>
