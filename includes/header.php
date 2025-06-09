@@ -128,10 +128,9 @@ $mainPad = ($sticky_nav && !$transparent_nav) ? 'pt-16' : '';
     <nav class="py-4 relative">
 
       <!-- Desktop nav -->
-      <ul class="desktop-menu flex items-center justify-between space-x-8">
-        <li><a href="index.php"               class="<?= $deskLink; ?>">Home</a></li>
-
-        <li class="dropdown">
+      <ul class="desktop-menu flex items-center justify-center gap-4">
+        <li><a href="index.php" class="<?= $deskLink; ?> mr-[50px]">Home</a></li>
+        <li class="dropdown mr-[50px]">
           <a href="#" tabindex="-1" class="<?= $deskLink; ?> cursor-default select-none">
             Portfolio <i class="fas fa-chevron-down ml-1 text-base chev"></i>
           </a>
@@ -142,15 +141,14 @@ $mainPad = ($sticky_nav && !$transparent_nav) ? 'pt-16' : '';
             <li><a href="portfolio-travel.php">Travel</a></li>
           </ul>
         </li>
-
-        <li><a href="about.php"   class="<?= $deskLink; ?>">About</a></li>
-        <li><a href="contact.php" class="<?= $deskLink; ?>">Contact</a></li>
+        <li><a href="about.php" class="<?= $deskLink; ?> ml-[50px]">About</a></li>
+        <li><a href="contact.php" class="<?= $deskLink; ?> ml-[50px]">Contact</a></li>
       </ul>
 
       <!-- Burger -->
       <button id="mobile-menu-button"
-              class="md:hidden absolute right-4 top-4 <?= $iconClr; ?>">
-        <i class="fas fa-bars text-2xl"></i>
+              class="md:hidden absolute right-6 top-8 <?= $iconClr; ?> text-base font-semibold tracking-wide">
+        Menu
       </button>
 
     </nav>

@@ -4,7 +4,7 @@ ob_start(); // Prevent headers already sent errors
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');  // Change this in production
 define('DB_PASS', '');      // Change this in production
-define('DB_NAME', 'photography_cms');
+define('DB_NAME', 'cmsdb');  // Updated to match the SQL file
 
 // Session configuration
 ini_set('session.cookie_httponly', 1);
