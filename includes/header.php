@@ -1,7 +1,7 @@
 <?php
-/* ------------------------------------------------------------------
+/* --------------------------------------------------------------
  *  includes/header.php
- * ------------------------------------------------------------------ */
+ * -------------------------------------------------------------- */
 ?>
 <!DOCTYPE html>
 <html lang="en-US">
@@ -10,103 +10,120 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title><?= $page_title ?? 'Professional Photography'; ?></title>
 
-  <!-- Tailwind & Icons -->
+  <!-- Tailwind + Icons -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+  <link  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+         rel="stylesheet"/>
 
   <style>
-/* ------------ helpers ------------ */
+/* ---------- shared link underline ---------- */
 .nav-link{position:relative;}
 .nav-link::after{
   content:'';position:absolute;left:0;bottom:-4px;width:0;height:2px;
-  background:currentColor;transition:width .3s ease;
+  background:currentColor;transition:width .3s;
 }
 .nav-link:hover::after,.nav-link.active::after{width:100%;}
 
-/* white text + black outline for transparent bar */
+/* ---------- outlined-white (for transparent hero) ---------- */
 .outlined-white{
   color:#fff !important;
-  /* four-way shadow → faux stroke (works everywhere) */
-  text-shadow:
-    -1px -1px 0 #000,  1px -1px 0 #000,
-    -1px  1px 0 #000,  1px  1px 0 #000;
+  text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;
 }
 
-/* ---------- Desktop dropdown ---------- */
+/* ---------- desktop dropdown ---------- */
 .dropdown{position:relative;}
 .dropdown>button{display:inline-flex;align-items:center;gap:.25rem;}
-.dropdown>button .chev{transition:transform .3s ease;}
+.dropdown>button .chev{transition:transform .3s;}
 .dropdown:hover>button .chev{transform:rotate(180deg);}
-
 .dropdown-content{
   @apply bg-white min-w-[200px] rounded shadow;
   position:absolute;top:calc(100% + 4px);left:0;padding:.5rem 0;
   opacity:0;visibility:hidden;transform:translateY(10px);
-  transition:opacity .3s ease,transform .3s ease,visibility .3s;z-index:1000;
+  transition:opacity .3s,transform .3s,visibility .3s;z-index:1000;
   background:#374151;
 }
 .dropdown:hover .dropdown-content{opacity:1;visibility:visible;transform:translateY(0);}
 .dropdown-content a{display:block;padding:.5rem 1rem;color:#fff;}
 .dropdown-content a:hover{background:#2563eb;}
 
-/* ---------- Mobile off-canvas panel ---------- */
+/* ---------- mobile slide-out panel ---------- */
 .mobile-menu{
   display:none;position:fixed;inset:0;padding:2rem;background:#fff;z-index:1000;
   transform:translateX(-100%);transition:transform .3s ease-in-out;
 }
 .mobile-menu.active{transform:translateX(0);}
 
-/* ---------- Mobile styles ---------- */
-@media (max-width:768px){
+/* ---------- responsive visibility ---------- */
+@media(max-width:768px){
   .desktop-menu{display:none !important;}
   .mobile-menu{display:block;}
   #mobile-menu-button{display:block;}
 
+  /* collapsed portfolio submenu */
   .mobile-dropdown-content{max-height:0;overflow:hidden;transition:max-height .4s ease;}
   .mobile-dropdown.open .mobile-dropdown-content{max-height:500px;}
 
+  /* link fade-in animation */
   .mobile-dropdown-content a{
     opacity:0;transform:translateY(5px);
     transition:opacity .3s,transform .3s;color:#1f2937;
   }
   .mobile-dropdown.open .mobile-dropdown-content a{opacity:1;transform:translateY(0);}
+
   .mobile-dropdown .chev{transition:transform .3s;}
   .mobile-dropdown.open .chev{transform:rotate(180deg);}
-  .mobile-menu .dropdown-content{position:static;box-shadow:none;padding-left:1rem;
-    opacity:1 !important;visibility:visible !important;transform:none !important;}
+
+  /* keep submenu visible inside panel */
+  .mobile-menu .dropdown-content{
+    position:static;box-shadow:none;padding-left:1rem;
+    opacity:1 !important;visibility:visible !important;transform:none !important;
+  }
 }
-@media (min-width:769px){
+@media(min-width:769px){
   #mobile-menu-button{display:none !important;}
 }
+
 /* hide desktop nav while panel open */
 .mobile-menu.active~header .desktop-menu,
 .mobile-menu.active~header #mobile-menu-button{display:none !important;}
+
+/* ---------- NEW: hover-to-open submenu (desktop pointer) ---------- */
+@media (hover:hover) and (pointer:fine) {
+  .mobile-dropdown:hover .mobile-dropdown-content{max-height:500px;}
+  .mobile-dropdown:hover .mobile-dropdown-content a{opacity:1;transform:translateY(0);}
+  .mobile-dropdown:hover .chev{transform:rotate(180deg);}
+}
   </style>
 </head>
 <body class="bg-gray-50">
 
 <?php
 /* ---------------------------------------------------------------
- *  Pass $transparent_nav = true in a page BEFORE including header
- *  to get the overlay version.
+ *  Per-page flags (provide before including header.php)
  * ------------------------------------------------------------- */
-$transparent_nav = $transparent_nav ?? false;
+$transparent_nav = $transparent_nav ?? false;  // hero overlay?
+$sticky_nav      = $sticky_nav      ?? true;   // stick to top?
 
-/* common classes for desktop links */
+/* link + icon colour */
 $baseLink = 'nav-link transition';
 $deskLink = $transparent_nav
             ? "$baseLink outlined-white hover:text-gray-100"
             : "$baseLink text-black hover:text-gray-700";
+$iconClr  = $transparent_nav ? 'outlined-white' : 'text-black';
 
-/* burger / close icon colour */
-$iconColour = $transparent_nav ? 'outlined-white' : 'text-black';
+/* header positioning */
+$headerPos = $sticky_nav ? 'fixed' : 'absolute';
+$headerCls = "$headerPos inset-x-0 top-0 z-50 ".
+             ($transparent_nav
+              ? 'bg-transparent shadow-none'
+              : 'bg-white/80 backdrop-blur-md shadow-sm');
+
+/* padding for page content */
+$mainPad = ($sticky_nav && !$transparent_nav) ? 'pt-16' : '';
 ?>
 
 <!-- ---------- NAVBAR ---------- -->
-<header class="<?= $transparent_nav
-        ? 'fixed inset-x-0 top-0 z-50 bg-transparent shadow-none'
-        : 'fixed inset-x-0 top-0 z-50 bg-white/80 backdrop-blur-md shadow-sm'; ?>">
+<header class="<?= $headerCls; ?>">
   <div class="container mx-auto px-4">
     <nav class="py-4 relative">
 
@@ -132,7 +149,7 @@ $iconColour = $transparent_nav ? 'outlined-white' : 'text-black';
 
       <!-- Burger -->
       <button id="mobile-menu-button"
-              class="md:hidden absolute right-4 top-4 <?= $iconColour; ?>">
+              class="md:hidden absolute right-4 top-4 <?= $iconClr; ?>">
         <i class="fas fa-bars text-2xl"></i>
       </button>
 
@@ -170,49 +187,41 @@ $iconColour = $transparent_nav ? 'outlined-white' : 'text-black';
 
 <!-- ---------- SCRIPTS ---------- -->
 <script>
-/* slide-out panel */
+/* slide-out panel toggle */
 const mobileMenuBtn = document.getElementById('mobile-menu-button');
 const closeMenuBtn  = document.getElementById('close-menu');
 const mobileMenu    = document.getElementById('mobile-menu');
 
-function toggleMenu(){
-  mobileMenu.classList.toggle('active');
-  document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
+function toggleMenu(open) {
+  if (open === true)  mobileMenu.classList.add('active');
+  else if (open===false) mobileMenu.classList.remove('active');
+  else mobileMenu.classList.toggle('active');
+
+  document.body.style.overflow =
+    mobileMenu.classList.contains('active') ? 'hidden' : '';
 }
 mobileMenuBtn.addEventListener('click', toggleMenu);
 closeMenuBtn .addEventListener('click', toggleMenu);
 
-/* close panel after link click */
+/* close panel after any link click */
 mobileMenu.querySelectorAll('a').forEach(link=>{
-  link.addEventListener('click', ()=>{
-    if(mobileMenu.classList.contains('active')) toggleMenu();
+  link.addEventListener('click', ()=> {
+    if (mobileMenu.classList.contains('active')) toggleMenu(false);
   });
 });
 
-/* dropdown toggle for tap */
+/* touch + click toggle for Portfolio submenu */
 const mobileDropdown       = document.querySelector('.mobile-dropdown');
 const mobileDropdownToggle = document.querySelector('.mobile-dropdown-toggle');
-
 function toggleMobileDropdown(e){
   e.preventDefault();
   mobileDropdown.classList.toggle('open');
 }
-mobileDropdownToggle.addEventListener('click',      toggleMobileDropdown);
 mobileDropdownToggle.addEventListener('touchstart', toggleMobileDropdown);
-
-/* close dropdown if you click outside */
-document.addEventListener('click', e=>{
-  if(
-    mobileDropdown.classList.contains('open') &&
-    !mobileDropdown.contains(e.target) &&
-    !mobileDropdownToggle.contains(e.target)
-  ){
-    mobileDropdown.classList.remove('open');
-  }
-});
+mobileDropdownToggle.addEventListener('click', toggleMobileDropdown);
 </script>
 
-<!-- Main wrapper: only pushes content when header is NOT transparent -->
-<main class="<?= $transparent_nav ? '' : 'pt-16'; ?>"><!-- page content --></main>
+<!-- page wrapper -->
+<main class="<?= $mainPad; ?>"><!-- page content --></main>
 </body>
 </html>
