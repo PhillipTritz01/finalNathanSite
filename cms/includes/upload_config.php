@@ -12,6 +12,8 @@ define('MAX_FILES', 50); // 50 files
 define('ALLOWED_IMAGE_TYPES', ['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
 define('ALLOWED_VIDEO_TYPES', ['video/mp4', 'video/webm', 'video/ogg']);
 define('ALLOWED_AUDIO_TYPES', ['audio/mpeg', 'audio/ogg', 'audio/wav']);
+define('UPLOAD_DIR', realpath(__DIR__.'/../uploads').DIRECTORY_SEPARATOR);
+define('UPLOAD_URL',  'uploads/'); // what goes into the DB / <img src>
 
 // Function to validate file uploads
 function validateFileUpload($files) {
