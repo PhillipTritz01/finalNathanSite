@@ -2,100 +2,113 @@
 require_once 'includes/config.php';
 require_once 'includes/upload_config.php';
 
-/* ───── Auth & session ───── */
+/* ─────── Session / auth ─────── */
 if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
-    header('Location: login.php'); exit;
+  header('Location: login.php'); exit;
 }
 if (isset($_SESSION['last_activity']) && time() - $_SESSION['last_activity'] > 1800) {
-    session_unset(); session_destroy(); header('Location: login.php'); exit;
+  session_unset(); session_destroy(); header('Location: login.php'); exit;
 }
 $_SESSION['last_activity'] = time();
 if (isset($_GET['logout'])) { session_unset(); session_destroy(); header('Location: login.php'); exit; }
 
-/* ───── DB ───── */
-$conn = getDBConnection();
-
-/* ───── add new / delete-all actions ───── */
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-
-    switch ($_POST['action']) {
-
-    /* add a new portfolio item */
-    case 'add_portfolio':
-        $title       = htmlspecialchars(trim($_POST['title'] ?? ''), ENT_QUOTES);
-        $description = htmlspecialchars(trim($_POST['description'] ?? ''), ENT_QUOTES);
-        $category    = htmlspecialchars(trim($_POST['category'] ?? 'clients'), ENT_QUOTES);
-
-        try {
-            $conn->beginTransaction();
-            $conn->prepare("INSERT INTO portfolio_items (title,description,category) VALUES (?,?,?)")
-                 ->execute([$title,$description,$category]);
-            $itemId = $conn->lastInsertId();
-
-            if (!empty($_FILES['media']['name'][0])) {
-                $allowed = array_merge(ALLOWED_IMAGE_TYPES, ALLOWED_VIDEO_TYPES, ALLOWED_AUDIO_TYPES);
-                foreach ($_FILES['media']['name'] as $i=>$name) {
-                    if ($_FILES['media']['error'][$i]) continue;
-                    $type = $_FILES['media']['type'][$i];
-                    if (!in_array($type,$allowed)) continue;
-
-                    $mediaType = str_starts_with($type,'image/') ? 'image'
-                              : (str_starts_with($type,'video/') ? 'video' : 'audio');
-                    $ext   = strtolower(pathinfo($name,PATHINFO_EXTENSION));
-                    $new   = uniqid().'.'.$ext;
-                    $file  = UPLOAD_DIR.$new;
-                    $url   = UPLOAD_URL.$new;
-
-                    if (!move_uploaded_file($_FILES['media']['tmp_name'][$i],$file)) continue;
-
-                    $order = $i;
-                    $conn->prepare("INSERT INTO portfolio_media
-                                    (portfolio_item_id,media_url,media_type,display_order)
-                                    VALUES (?,?,?,?)")
-                         ->execute([$itemId,$url,$mediaType,$order]);
-                }
-            }
-            $conn->commit();
-        } catch(Throwable $e){ $conn->rollBack(); }
-        break;
-
-    /* delete entire item ("Delete All") */
-    case 'delete_portfolio':
-        $id = (int)($_POST['id'] ?? 0);
-        if ($id) {
-            try {
-                $conn->beginTransaction();
-                $paths=$conn->prepare("SELECT media_url FROM portfolio_media WHERE portfolio_item_id=?");
-                $paths->execute([$id]);
-                foreach($paths->fetchAll(PDO::FETCH_COLUMN) as $url){
-                    $path = realpath(__DIR__.'/../'.$url);
-                    if ($path && str_starts_with($path,UPLOAD_DIR) && is_file($path)) @unlink($path);
-                }
-                $conn->prepare("DELETE FROM portfolio_items WHERE id=?")->execute([$id]);
-                $conn->commit();
-                if (isAjax()) { echo json_encode(['success'=>true]); exit; }
-            } catch(Throwable $e){
-                if ($conn->inTransaction()) $conn->rollBack();
-                if (isAjax()){
-                    http_response_code(500); echo json_encode(['success'=>false]); exit;
-                }
-            }
-        }
-        break;
-    }
+/* ─────── Merge raw-JSON into $_POST if frontend used fetch JSON ─────── */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$_POST) {
+  $raw = json_decode(file_get_contents('php://input'), true);
+  if (is_array($raw)) foreach ($raw as $k=>$v) $_POST[$k] = $v;
 }
 
-/* utility */
-function isAjax(): bool { return strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')==='xmlhttprequest'; }
+/* ─────── DB ─────── */
+$conn = getDBConnection();
 
-/* fetch items */
-$items=$conn->query("SELECT * FROM portfolio_items ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+/* ─────── Add-new / Delete-all ─────── */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+
+  switch ($_POST['action']) {
+
+  /* add a new portfolio item + its media */
+  case 'add_portfolio':
+    $title       = htmlspecialchars(trim($_POST['title'] ?? ''), ENT_QUOTES);
+    $description = htmlspecialchars(trim($_POST['description'] ?? ''), ENT_QUOTES);
+    $category    = htmlspecialchars(trim($_POST['category'] ?? 'clients'), ENT_QUOTES);
+
+    try {
+      $conn->beginTransaction();
+      $conn->prepare("INSERT INTO portfolio_items (title,description,category) VALUES (?,?,?)")
+           ->execute([$title,$description,$category]);
+      $itemId = $conn->lastInsertId();
+
+      if (!empty($_FILES['media']['name'][0])) {
+        $allowed = array_merge(ALLOWED_IMAGE_TYPES, ALLOWED_VIDEO_TYPES, ALLOWED_AUDIO_TYPES);
+
+        foreach ($_FILES['media']['name'] as $i => $name) {
+          if ($_FILES['media']['error'][$i]) continue;
+          $type = $_FILES['media']['type'][$i];
+          if (!in_array($type,$allowed)) continue;
+
+          $mediaType = str_starts_with($type,'image/') ? 'image'
+                    : (str_starts_with($type,'video/') ? 'video' : 'audio');
+          $ext  = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+          $new  = uniqid().'.'.$ext;
+          $file = UPLOAD_DIR.$new;
+          $url  = UPLOAD_URL.$new;
+
+          if (!move_uploaded_file($_FILES['media']['tmp_name'][$i], $file)) continue;
+
+          $conn->prepare("INSERT INTO portfolio_media
+                          (portfolio_item_id,media_url,media_type,display_order)
+                          VALUES (?,?,?,?)")
+               ->execute([$itemId,$url,$mediaType,$i]);
+        }
+      }
+      $conn->commit();
+    } catch(Throwable $e){ $conn->rollBack(); }
+    break;
+
+  /* delete ALL media inside one portfolio item */
+  case 'delete_portfolio':
+    $id = (int)($_POST['id'] ?? 0);
+    if ($id) {
+      try {
+        $conn->beginTransaction();
+        $stmt=$conn->prepare("SELECT media_url FROM portfolio_media WHERE portfolio_item_id=?");
+        $stmt->execute([$id]);
+        foreach($stmt->fetchAll(PDO::FETCH_COLUMN) as $u){
+          $p = realpath(__DIR__.'/../'.$u);
+          if ($p && str_starts_with($p, UPLOAD_DIR) && is_file($p)) @unlink($p);
+        }
+        $conn->prepare("DELETE FROM portfolio_items WHERE id=?")->execute([$id]);
+        $conn->commit();
+        if (strtolower($_SERVER['HTTP_X_REQUESTED_WITH']??'')==='xmlhttprequest'){
+          echo json_encode(['success'=>true]); exit;
+        }
+      }catch(Throwable $e){
+        if($conn->inTransaction()) $conn->rollBack();
+        if (strtolower($_SERVER['HTTP_X_REQUESTED_WITH']??'')==='xmlhttprequest'){
+          http_response_code(500); echo json_encode(['success'=>false]); exit;
+        }
+      }
+    }
+    break;
+  }
+}
+
+/* ─────── Fetch items ─────── */
+$items = $conn->query("SELECT * FROM portfolio_items ORDER BY created_at DESC")
+              ->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>CMS Admin</title>
+
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+
+<!-- PhotoSwipe -->
+<link  rel="stylesheet" href="../public/assets/css/photoswipe.css">
+<script src="../public/assets/js/photoswipe.umd.min.js"></script>
+<script src="../public/assets/js/photoswipe-lightbox.umd.min.js"></script>
+
 <style>
 .sidebar{min-height:100vh;background:#343a40;color:#fff}
 .content{padding:20px}
@@ -111,14 +124,12 @@ $items=$conn->query("SELECT * FROM portfolio_items ORDER BY created_at DESC")->f
 .gallery-grid .media-wrapper{position:relative}
 .gallery-grid img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:6px;cursor:pointer;transition:transform .2s}
 .gallery-grid img:hover{transform:scale(1.05)}
-#lightbox{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.9);
-          opacity:0;transform:scale(.97);transition:opacity .25s,transform .25s;z-index:1056}
-#lightbox.show{opacity:1;transform:scale(1)}
-#lightbox img{max-width:95%;max-height:95%;border-radius:4px;box-shadow:0 0 20px rgba(0,0,0,.6)}
-.light-nav{position:absolute;top:50%;transform:translateY(-50%);font-size:2rem;color:#fff;background:transparent;border:none;padding:.25rem .5rem;opacity:.7}
-.light-nav:hover{opacity:1}.light-prev{left:15px}.light-next{right:15px}
 #backToTop{position:fixed;bottom:25px;right:25px;display:none;z-index:1030}
 .portfolio-item.fade-out{opacity:0;transition:opacity .5s}
+.toast{background:#fff;border-radius:4px;box-shadow:0 .5rem 1rem rgba(0,0,0,.15)}
+.toast-container{z-index:10860}
+.loading-spinner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);z-index:1}
+.pswp__counter{font-size:1.05rem}
 </style>
 </head><body>
 <div class="container-fluid"><div class="row">
@@ -133,7 +144,7 @@ $items=$conn->query("SELECT * FROM portfolio_items ORDER BY created_at DESC")->f
 <main class="col-md-9 col-lg-10 content">
   <h2 class="mb-4">Portfolio Management</h2>
 
-  <!-- ADD NEW ------------------------------------------------------ -->
+  <!-- ADD NEW -->
   <div class="card mb-4"><div class="card-body">
     <h5 class="card-title">Add New Portfolio Item</h5>
     <form method="POST" enctype="multipart/form-data">
@@ -145,48 +156,48 @@ $items=$conn->query("SELECT * FROM portfolio_items ORDER BY created_at DESC")->f
           <option value="clients">Clients</option><option value="fineart">Fine Art</option>
           <option value="portraits">Portraits</option><option value="travel">Travel</option>
         </select></div>
-      <div class="mb-2">
-        <label class="form-label">Media Files</label>
+      <div class="mb-2"><label class="form-label">Media Files</label>
         <input type="file" class="form-control" name="media[]" accept="image/*,video/*,audio/*" multiple required>
       </div>
       <button class="btn btn-primary">Add Item</button>
     </form>
   </div></div>
 
-  <!-- ITEMS -------------------------------------------------------- -->
-<?php foreach($items as $it):
-      $media=$conn->prepare("SELECT id,media_url FROM portfolio_media
+<?php /* ITEMS LOOP */ foreach($items as $it):
+      $rows=$conn->prepare("SELECT id,media_url FROM portfolio_media
                              WHERE portfolio_item_id=? ORDER BY display_order,id");
-      $media->execute([$it['id']]);
-      $all=$media->fetchAll(PDO::FETCH_ASSOC);
-      $thumbs=array_slice($all,0,8);
+      $rows->execute([$it['id']]);
+      $media=$rows->fetchAll(PDO::FETCH_ASSOC);
+      $thumbs=array_slice($media,0,8);
 ?>
   <div class="portfolio-item" id="item-<?=$it['id']?>">
     <div class="d-flex flex-wrap align-items-start gap-4">
       <div class="d-flex flex-column gap-2">
-        <!-- DASHBOARD THUMBS -->
+        <!-- thumbs -->
         <div class="media-preview-container">
         <?php foreach($thumbs as $m): ?>
-          <div class="media-wrapper position-relative" data-full="<?=htmlspecialchars($m['media_url'])?>">
+          <div class="media-wrapper position-relative">
             <img src="<?=htmlspecialchars($m['media_url'])?>" class="media-preview">
             <input type="checkbox" class="form-check-input delete-check" data-media-id="<?=$m['id']?>">
           </div>
         <?php endforeach; ?>
-        <?php if(count($all)>8): ?>
+        <?php if(count($media)>8): ?>
           <div class="d-flex align-items-center justify-content-center bg-secondary text-white rounded"
                style="width:120px;height:120px;cursor:pointer"
-               data-bs-toggle="modal" data-bs-target="#gal<?=$it['id']?>">+<?=count($all)-8?></div>
+               data-bs-toggle="modal" data-bs-target="#galleryModal"
+               data-portfolio-id="<?=$it['id']?>"
+               data-items='<?=htmlspecialchars(json_encode($media),ENT_QUOTES)?>'>
+            +<?=count($media)-8?>
+          </div>
         <?php endif; ?>
         </div>
 
-        <!-- extra-media picker -->
+        <!-- add-more picker -->
         <form class="add-media-form" data-portfolio-id="<?=$it['id']?>" enctype="multipart/form-data">
           <input type="file" name="media[]" multiple class="form-control form-control-sm add-media-input">
         </form>
 
-        <button class="btn btn-danger btn-sm delete-selected" disabled
-                data-portfolio-id="<?=$it['id']?>">Delete Selected</button>
-
+        <button class="btn btn-danger btn-sm delete-selected" disabled>Delete Selected</button>
         <button class="btn btn-outline-danger btn-sm delete-all" data-id="<?=$it['id']?>">Delete All</button>
       </div>
 
@@ -198,139 +209,237 @@ $items=$conn->query("SELECT * FROM portfolio_items ORDER BY created_at DESC")->f
       </div>
     </div>
   </div>
+<?php endforeach; ?>
 
-  <!-- MODAL GALLERY -->
-  <div class="modal fade" id="gal<?=$it['id']?>" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content bg-dark">
-      <form class="delete-media-form" data-portfolio-id="<?=$it['id']?>">
-        <div class="modal-header border-0 d-flex align-items-center justify-content-between">
-          <div class="form-check d-flex align-items-center">
-            <input type="checkbox" class="form-check-input select-all-modal" id="sel<?=$it['id']?>">
-            <label for="sel<?=$it['id']?>" class="form-label mb-0 ms-2 text-white">Select All</label>
-          </div>
-          <button class="btn btn-danger btn-sm delete-selected" disabled>
+</main></div></div>
+
+<!-- shared gallery modal -->
+<div class="modal fade" id="galleryModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content bg-dark">
+    <form class="delete-media-form">
+      <div class="modal-header border-0 d-flex align-items-center justify-content-between">
+        <div class="form-check d-flex align-items-center">
+          <input class="form-check-input select-all-modal" type="checkbox" id="selectAllModal">
+          <label for="selectAllModal" class="form-label mb-0 ms-2 text-white">Select All</label>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Close
+          </button>
+          <button type="submit" class="btn btn-danger btn-sm delete-selected" disabled>
             <i class="bi bi-trash"></i> Delete Selected
           </button>
         </div>
-        <div class="modal-body"><div class="gallery-grid">
-          <?php foreach($all as $m): ?>
-          <div class="media-wrapper" data-full="<?=htmlspecialchars($m['media_url'])?>">
-            <img src="<?=htmlspecialchars($m['media_url'])?>">
-            <input type="checkbox" class="form-check-input delete-check" data-media-id="<?=$m['id']?>">
-          </div>
-          <?php endforeach; ?>
-        </div></div>
-      </form>
-    </div></div>
-  </div>
-<?php endforeach; ?>
-</main></div></div>
-
-<!-- back-to-top + light-box -->
-<button id="backToTop" class="btn btn-primary rounded-circle shadow"><i class="bi bi-chevron-up"></i></button>
-<div id="lightbox" class="d-none">
-  <button class="light-nav light-prev">&lt;</button>
-  <img id="lightImg" src="">
-  <button class="light-nav light-next">&gt;</button>
+      </div>
+      <div class="modal-body position-relative">
+        <div class="loading-spinner d-none"><div class="spinner-border text-light"><span class="visually-hidden">Loading</span></div></div>
+        <div class="gallery-grid"></div>
+      </div>
+    </form>
+  </div></div>
 </div>
+
+<!-- toast -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="toast" class="toast" data-bs-delay="3000">
+    <div class="toast-header"><strong class="me-auto" id="toastTitle">Info</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+    </div>
+    <div class="toast-body" id="toastMsg"></div>
+  </div>
+</div>
+
+<!-- back-to-top -->
+<button id="backToTop" class="btn btn-primary rounded-circle shadow"><i class="bi bi-chevron-up"></i></button>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-/* helper ---------------------------------------------------------- */
-function sendForm(url,data,method='POST'){
-  const fd=data instanceof FormData?data:new FormData();
-  if(!(data instanceof FormData))Object.entries(data).forEach(([k,v])=>fd.append(k,v));
-  return fetch(url,{method,body:fd,headers:{'X-Requested-With':'XMLHttpRequest'}})
-         .then(r=>{if(!r.ok)throw new Error(r.status);return r.json()});
+/* ----- helper toast ----- */
+function toast(title,msg,isOK=true){
+  document.getElementById('toastTitle').textContent=title;
+  document.getElementById('toastMsg').textContent=msg;
+  document.getElementById('toast').classList.toggle('bg-danger',!isOK);
+  bootstrap.Toast.getOrCreateInstance('#toast').show();
 }
+const postJSON=(url,obj)=>fetch(url,{
+  method:'POST',
+  headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},
+  body:JSON.stringify(obj)
+}).then(r=>{if(!r.ok)throw Error(r.status);return r.json()});
 
+/* -------------------------------------------------------------- */
 document.addEventListener('DOMContentLoaded',()=>{
 
-  /* auto-submit extra-media */
-  document.querySelectorAll('.add-media-input').forEach(inp=>{
-    inp.onchange=function(){ if(this.files.length) this.form.requestSubmit(); };
-  });
-  document.querySelectorAll('.add-media-form').forEach(f=>{
-    f.onsubmit=e=>{
-      e.preventDefault();
-      const fd=new FormData(f); fd.append('portfolio_id',f.dataset.portfolioId);
-      sendForm('api/add_media.php',fd).then(()=>location.reload())
-            .catch(()=>alert('Add error'));
-    };
-  });
+/* auto-submit extra-media */
+document.querySelectorAll('.add-media-input').forEach(inp=>{
+  inp.onchange=()=>{ if(inp.files.length) inp.form.requestSubmit(); };});
+document.querySelectorAll('.add-media-form').forEach(f=>{
+  f.onsubmit=e=>{
+    e.preventDefault();
+    const fd=new FormData(f); fd.append('portfolio_id',f.dataset.portfolioId);
+    fetch('api/add_media.php',{method:'POST',body:fd,headers:{'X-Requested-With':'XMLHttpRequest'}})
+      .then(()=>location.reload())
+      .catch(()=>toast('Error','Upload failed',false));
+  };
+});
 
-  /* DELETE ALL */
-  document.querySelectorAll('.delete-all').forEach(btn=>{
-    btn.onclick=()=>{
-      if(!confirm('Delete ALL images in this section?')) return;
-      const id=btn.dataset.id;
-      sendForm('',{action:'delete_portfolio',id})
-        .then(()=>{ const el=document.getElementById('item-'+id);
-                     if(el){ el.classList.add('fade-out'); setTimeout(()=>el.remove(),500);} })
-        .catch(()=>alert('Error deleting all'));
-    };
-  });
+/* DELETE ALL */
+document.querySelectorAll('.delete-all').forEach(btn=>{
+  btn.onclick=()=>{
+    if(!confirm('Delete ALL images in this section?'))return;
+    postJSON('',{action:'delete_portfolio',id:+btn.dataset.id})
+      .then(()=>document.getElementById('item-'+btn.dataset.id)?.classList.add('fade-out'))
+      .catch(()=>toast('Error','Delete failed',false));
+  };
+});
 
-  /* batch-delete (dashboard & modal) */
-  function initBatch(scope){
-    const btn    = scope.querySelector('.delete-selected');
-    const boxes  = [...scope.querySelectorAll('.delete-check')];
-    const master = scope.querySelector('.select-all-modal');
+/* dashboard batch-delete */
+document.querySelectorAll('.portfolio-item').forEach(card=>{
+  const btn   = card.querySelector('.delete-selected');
+  const boxes = [...card.querySelectorAll('.delete-check')];
+  const sync  = ()=>{btn.disabled=!boxes.some(b=>b.checked);btn.classList.toggle('active',!btn.disabled);};
+  card.addEventListener('change',sync); sync();
+  btn.onclick=()=>{
+    const ids=boxes.filter(b=>b.checked).map(b=>+b.dataset.mediaId);
+    if(!ids.length||!confirm('Delete selected?'))return;
+    postJSON('api/delete_media.php',{media_ids:ids})
+      .then(()=>location.reload())
+      .catch(()=>toast('Error','Delete failed',false));
+  };
+});
 
-    const syncUI=()=>{
-      const any = boxes.some(b=>b.checked);
-      btn.disabled = !any;
-      btn.classList.toggle('active',any);
-      if(master) master.checked = boxes.every(b=>b.checked);
-    };
-    scope.addEventListener('change',syncUI); syncUI();
+/* back-to-top */
+const top=document.getElementById('backToTop');
+window.onscroll=()=>top.style.display=scrollY>300?'block':'none';
+top.onclick=()=>scrollTo({top:0,behavior:'smooth'});
 
-    if(master){
-      master.addEventListener('change',()=>{ boxes.forEach(b=>b.checked=master.checked); syncUI(); });
+/* modal controller */
+const modalEl=document.getElementById('galleryModal');
+const modal   = new bootstrap.Modal(modalEl);
+const grid    = modalEl.querySelector('.gallery-grid');
+const spinner = modalEl.querySelector('.loading-spinner');
+const selectAll = modalEl.querySelector('.select-all-modal');
+const delBtn  = modalEl.querySelector('.delete-selected');
+let currentIds=[], selected=new Set(), lightbox=null;
+
+/* open modal from +N */
+document.querySelectorAll('[data-bs-target="#galleryModal"]').forEach(btn=>{
+  btn.onclick=()=>{
+    const items=JSON.parse(btn.dataset.items||'[]');
+    currentIds = items.map(x=>x.id);
+    selected.clear(); 
+    buildGrid(items); 
+    modal.show();
+  };
+});
+
+/* build grid + PhotoSwipe anchors */
+function buildGrid(items){
+  spinner.classList.remove('d-none'); 
+  grid.innerHTML='';
+  const pswpDiv=document.createElement('div');
+  pswpDiv.className='pswp-gallery'; 
+  pswpDiv.id='pswp-'+Date.now(); 
+  pswpDiv.style.display='none';
+  grid.before(pswpDiv);
+
+  items.forEach((it,i)=>{
+    const wrap=document.createElement('div');
+    wrap.className='media-wrapper position-relative';
+    wrap.innerHTML=`<img src="${it.media_url}" loading="lazy">
+                    <input type="checkbox" class="form-check-input delete-check" data-media-id="${it.id}">`;
+    grid.appendChild(wrap);
+
+    if(it.media_url.match(/\.(jpe?g|png|gif|webp)$/i)){
+      const a=document.createElement('a'); 
+      a.href=it.media_url;
+      a.dataset.pswpWidth=1600; 
+      a.dataset.pswpHeight=1200;
+      pswpDiv.appendChild(a);
+      wrap.querySelector('img').onclick=()=>{
+        if(lightbox) lightbox.loadAndOpen(i);
+      };
+      wrap.querySelector('img').style.cursor='zoom-in';
     }
+  });
 
-    scope.addEventListener('submit',e=>{
-      e.preventDefault();
-      const ids=boxes.filter(b=>b.checked).map(b=>b.dataset.mediaId);
-      if(!ids.length||!confirm('Delete selected?')) return;
-      sendForm('api/delete_media.php',{media_ids:JSON.stringify(ids)})
-        .then(r=>r.success?location.reload():alert('Delete error'))
-        .catch(()=>alert('Network error'));
-    });
+  /* PhotoSwipe instance */
+  if(lightbox) {
+    lightbox.destroy();
   }
-  document.querySelectorAll('.portfolio-item').forEach(initBatch);
-  document.querySelectorAll('.delete-media-form').forEach(initBatch);
-
-  /* light-box ------------------------------------------------------ */
-  const lb=document.getElementById('lightbox'), img=document.getElementById('lightImg'),
-        prev=lb.querySelector('.light-prev'), next=lb.querySelector('.light-next');
-  let set=[],idx=0;
-  const show=i=>{ idx=(i+set.length)%set.length; img.src=set[idx];
-    lb.classList.remove('d-none'); requestAnimationFrame(()=>lb.classList.add('show')); };
-  const close=()=>{ lb.classList.remove('show');
-    lb.addEventListener('transitionend',()=>lb.classList.add('d-none'),{once:true}); };
-
-  prev.onclick=()=>show(idx-1); next.onclick=()=>show(idx+1);
-  lb.onclick=e=>{ if(e.target===lb) close(); };
-  document.addEventListener('keyup',e=>{
-    if(lb.classList.contains('show')){
-      if(e.key==='Escape') close();
-      if(e.key==='ArrowLeft') show(idx-1);
-      if(e.key==='ArrowRight') show(idx+1);
-    }
+  lightbox = new PhotoSwipeLightbox({
+    gallery:'#'+pswpDiv.id, 
+    children:'a',
+    pswpModule:PhotoSwipe, 
+    wheelToZoom:true, 
+    arrowKeys:true,
+    padding:{top:40,bottom:40,left:40,right:40}, 
+    bgOpacity:1
   });
-  document.querySelectorAll('[data-full]').forEach(div=>{
-    div.onclick=e=>{
-      if(e.target.matches('.delete-check')) return;
-      set=[...div.parentElement.querySelectorAll('[data-full]')].map(d=>d.dataset.full);
-      show(set.indexOf(div.dataset.full));
+  lightbox.init();
+
+  spinner.classList.add('d-none');
+  attachCheckboxEvents();
+  syncModalUI();
+}
+
+/* checkbox handlers in modal */
+function attachCheckboxEvents(){
+  grid.querySelectorAll('.delete-check').forEach(cb=>{
+    cb.onchange=()=>{ 
+      if(cb.checked) {
+        selected.add(+cb.dataset.mediaId);
+      } else {
+        selected.delete(+cb.dataset.mediaId);
+      }
+      syncModalUI(); 
     };
   });
+  selectAll.onchange=()=>{
+    const isChecked = selectAll.checked;
+    grid.querySelectorAll('.delete-check').forEach(cb=>{
+      cb.checked = isChecked;
+      if(isChecked) {
+        selected.add(+cb.dataset.mediaId);
+      } else {
+        selected.delete(+cb.dataset.mediaId);
+      }
+    });
+    syncModalUI();
+  };
+}
 
-  /* back-to-top */
-  const top=document.getElementById('backToTop');
-  window.onscroll=()=> top.style.display = scrollY>300 ? 'block' : 'none';
-  top.onclick=()=> scrollTo({top:0,behavior:'smooth'});
+/* sync modal button / select-all */
+function syncModalUI(){
+  delBtn.disabled = !selected.size;
+  delBtn.classList.toggle('active', selected.size > 0);
+  const total = grid.querySelectorAll('.delete-check').length;
+  selectAll.indeterminate = selected.size > 0 && selected.size < total;
+  selectAll.checked = selected.size === total;
+}
+
+/* submit delete in modal */
+modalEl.querySelector('.delete-media-form').onsubmit=e=>{
+  e.preventDefault();
+  if(!selected.size||!confirm('Delete selected?')) return;
+  spinner.classList.remove('d-none');
+  postJSON('api/delete_media.php',{media_ids:Array.from(selected)})
+    .then(()=>location.reload())
+    .catch(()=>{
+      spinner.classList.add('d-none');
+      toast('Error','Delete failed',false);
+    });
+};
+
+/* reset on close */
+modalEl.addEventListener('hidden.bs.modal',()=>{
+  grid.innerHTML=''; 
+  selected.clear(); 
+  if(lightbox){ 
+    lightbox.destroy(); 
+    lightbox=null; 
+  }
+});
 });
 </script>
 </body></html>
