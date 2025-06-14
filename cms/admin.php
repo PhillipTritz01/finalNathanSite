@@ -374,7 +374,7 @@ const grid    = modalEl.querySelector('.gallery-grid');
 const spinner = modalEl.querySelector('.loading-spinner');
 const selectAll = modalEl.querySelector('.select-all-modal');
 const delBtn  = modalEl.querySelector('.delete-selected');
-let currentIds=[], selected=new Set(), lightbox=null;
+let currentIds=[], selected=new Set(), lightbox=null, currentPortfolioId=null;
 
 /* open modal from +N */
 document.querySelectorAll('[data-bs-target="#galleryModal"]').forEach(btn=>{
@@ -384,6 +384,8 @@ document.querySelectorAll('[data-bs-target="#galleryModal"]').forEach(btn=>{
     selected.clear(); 
     buildGrid(items); 
     modal.show();
+    // Store the portfolio id for dashboard sync
+    currentPortfolioId = btn.getAttribute('data-portfolio-id');
   };
 });
 
@@ -499,6 +501,30 @@ modalEl.querySelector('.delete-media-form').onsubmit=e=>{
       currentIds = currentIds.filter(id => !idsToDelete.includes(id));
       selected.clear();
       spinner.classList.add('d-none');
+      // --- Update dashboard +N count and data-items ---
+      if(currentPortfolioId){
+        const dashCard = document.querySelector('.portfolio-item[id="item-'+currentPortfolioId+'"]');
+        if(dashCard){
+          const plusN = dashCard.querySelector('[data-bs-toggle="modal"][data-bs-target="#galleryModal"]');
+          if(plusN){
+            let items = [];
+            try {
+              items = JSON.parse(plusN.getAttribute('data-items')||'[]');
+            } catch(e) {}
+            // Remove deleted ids from items
+            items = items.filter(m=>!idsToDelete.includes(m.id));
+            plusN.setAttribute('data-items', JSON.stringify(items));
+            // Update the +N text or hide if not needed
+            const n = items.length - 8;
+            if(n > 0){
+              plusN.textContent = '+'+n;
+              plusN.style.display = '';
+            } else {
+              plusN.style.display = 'none';
+            }
+          }
+        }
+      }
       // If no media left, close modal and show toast
       if(grid.querySelectorAll('.media-wrapper').length === 0){
         modal.hide();
