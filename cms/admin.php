@@ -288,7 +288,18 @@ document.querySelectorAll('.delete-all').forEach(btn=>{
   btn.onclick=()=>{
     if(!confirm('Delete ALL images in this section?'))return;
     postJSON('',{action:'delete_portfolio',id:+btn.dataset.id})
-      .then(()=>document.getElementById('item-'+btn.dataset.id)?.classList.add('fade-out'))
+      .then(()=>{
+        const el = document.getElementById('item-'+btn.dataset.id);
+        if(el){
+          el.classList.add('fade-out');
+          el.addEventListener('transitionend', function handler(e) {
+            if(e.propertyName==='opacity'){
+              el.removeEventListener('transitionend', handler);
+              el.remove();
+            }
+          });
+        }
+      })
       .catch(()=>toast('Error','Delete failed',false));
   };
 });
@@ -303,7 +314,50 @@ document.querySelectorAll('.portfolio-item').forEach(card=>{
     const ids=boxes.filter(b=>b.checked).map(b=>+b.dataset.mediaId);
     if(!ids.length||!confirm('Delete selected?'))return;
     postJSON('api/delete_media.php',{media_ids:ids})
-      .then(()=>location.reload())
+      .then(()=>{
+        // Remove deleted thumbnails
+        boxes.forEach(b=>{
+          if(b.checked){
+            const wrap = b.closest('.media-wrapper');
+            if(wrap) wrap.remove();
+          }
+        });
+        // Update the +N count
+        const previewContainer = card.querySelector('.media-preview-container');
+        const allMedia = Array.from(previewContainer.querySelectorAll('.media-wrapper'));
+        const plusN = card.querySelector('[data-bs-toggle="modal"][data-bs-target="#galleryModal"]');
+        // Get the total media count (including those not shown as thumbs)
+        let totalMedia = allMedia.length;
+        if(plusN){
+          // Try to update the data-items attribute
+          let items = [];
+          try {
+            items = JSON.parse(plusN.getAttribute('data-items')||'[]');
+          } catch(e) {}
+          // Remove deleted ids from items
+          items = items.filter(m=>!ids.includes(m.id));
+          plusN.setAttribute('data-items', JSON.stringify(items));
+          // Update the +N text or hide if not needed
+          const n = items.length - 8;
+          if(n > 0){
+            plusN.textContent = '+'+n;
+          } else {
+            plusN.style.display = 'none';
+          }
+          totalMedia = items.length;
+        }
+        // If no media left, fade out and remove the portfolio item
+        if(totalMedia === 0){
+          card.classList.add('fade-out');
+          card.addEventListener('transitionend', function handler(e) {
+            if(e.propertyName==='opacity'){
+              card.removeEventListener('transitionend', handler);
+              card.remove();
+            }
+          });
+        }
+        sync();
+      })
       .catch(()=>toast('Error','Delete failed',false));
   };
 });
@@ -385,37 +439,44 @@ function buildGrid(items){
 
 /* checkbox handlers in modal */
 function attachCheckboxEvents(){
+  // Always clear and rebuild selected set based on checked boxes
+  selected.clear();
   grid.querySelectorAll('.delete-check').forEach(cb=>{
-    cb.onchange=()=>{ 
+    if(cb.checked) selected.add(+cb.dataset.mediaId);
+    cb.onchange=()=>{
       if(cb.checked) {
         selected.add(+cb.dataset.mediaId);
       } else {
         selected.delete(+cb.dataset.mediaId);
       }
-      syncModalUI(); 
+      syncModalUI();
     };
   });
   selectAll.onchange=()=>{
     const isChecked = selectAll.checked;
+    selected.clear();
     grid.querySelectorAll('.delete-check').forEach(cb=>{
       cb.checked = isChecked;
       if(isChecked) {
         selected.add(+cb.dataset.mediaId);
-      } else {
-        selected.delete(+cb.dataset.mediaId);
       }
     });
     syncModalUI();
   };
+  syncModalUI(); // Always sync UI after attaching events
 }
 
-/* sync modal button / select-all */
 function syncModalUI(){
+  // Rebuild selected set based on checked boxes
+  selected.clear();
+  const boxes = grid.querySelectorAll('.delete-check');
+  boxes.forEach(cb=>{ if(cb.checked) selected.add(+cb.dataset.mediaId); });
   delBtn.disabled = !selected.size;
   delBtn.classList.toggle('active', selected.size > 0);
-  const total = grid.querySelectorAll('.delete-check').length;
-  selectAll.indeterminate = selected.size > 0 && selected.size < total;
-  selectAll.checked = selected.size === total;
+  const total = boxes.length;
+  const checked = selected.size;
+  selectAll.indeterminate = checked > 0 && checked < total;
+  selectAll.checked = checked === total && total > 0;
 }
 
 /* submit delete in modal */
@@ -423,8 +484,30 @@ modalEl.querySelector('.delete-media-form').onsubmit=e=>{
   e.preventDefault();
   if(!selected.size||!confirm('Delete selected?')) return;
   spinner.classList.remove('d-none');
-  postJSON('api/delete_media.php',{media_ids:Array.from(selected)})
-    .then(()=>location.reload())
+  const idsToDelete = Array.from(selected);
+  postJSON('api/delete_media.php',{media_ids:idsToDelete})
+    .then(()=>{
+      // Remove deleted media from grid
+      idsToDelete.forEach(id => {
+        const cb = grid.querySelector('.delete-check[data-media-id="'+id+'"]');
+        if(cb){
+          const wrap = cb.closest('.media-wrapper');
+          if(wrap) wrap.remove();
+        }
+      });
+      // Update currentIds and selected
+      currentIds = currentIds.filter(id => !idsToDelete.includes(id));
+      selected.clear();
+      spinner.classList.add('d-none');
+      // If no media left, close modal and show toast
+      if(grid.querySelectorAll('.media-wrapper').length === 0){
+        modal.hide();
+        toast('Info','All media deleted.');
+      } else {
+        attachCheckboxEvents();
+        syncModalUI();
+      }
+    })
     .catch(()=>{
       spinner.classList.add('d-none');
       toast('Error','Delete failed',false);
