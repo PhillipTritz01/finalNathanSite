@@ -45,7 +45,7 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
   .portfolio-nav-dropdown { background:#181818; color:#fff; margin-top:.5rem;
                              border-radius:.15rem; box-shadow:0 2px 8px rgb(0 0 0 /.08);
                              padding:.5rem 1.5rem; min-width:150px; position:absolute;
-                             right:0; display:none; flex-direction:column; }
+                             right:0; display:none; flex-direction:column; z-index:2001 !important; }
   .portfolio-nav.open .portfolio-nav-dropdown{ display:flex; }
   .portfolio-nav-dropdown a          { color:#fff; padding:.3em 0; text-decoration:none;
                                         font-size:1.1em; font-weight:400; letter-spacing:.05em;
@@ -62,6 +62,26 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
     transform: scale(1.07);
     box-shadow: 0 8px 32px rgba(0,0,0,0.18);
     z-index: 2;
+  }
+
+  /* Masonry gallery style */
+  .gallery-masonry {
+    column-count: 3;
+    column-gap: 1rem;
+  }
+  .gallery-masonry img {
+    width: 100%;
+    display: block;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    break-inside: avoid;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  @media (max-width: 900px) {
+    .gallery-masonry { column-count: 2; }
+  }
+  @media (max-width: 600px) {
+    .gallery-masonry { column-count: 1; }
   }
 </style>
 
@@ -92,9 +112,7 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
 
     <!-- responsive masonry-like grid -->
-    <div id="clients-gallery"
-         class="pswp-gallery gallery-zoom grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-
+    <div id="clients-gallery" class="gallery-masonry">
 <?php if ($items): ?>
   <?php foreach ($items as $item):
         $urls  = $item['media_urls']  ? explode(',', $item['media_urls'])  : [];
@@ -109,24 +127,22 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
             [$w,$h]  = @getimagesize($imgPath) ?: [1600,1200];
   ?>
             <a href="<?= $imgPath ?>"
-               data-pswp-width="<?= $w ?>" data-pswp-height="<?= $h ?>"
-               class="block overflow-hidden rounded-lg">
-              <img src="<?= $imgPath ?>" alt="<?= htmlspecialchars($item['title']) ?>"
-                   class="w-full h-auto object-contain" />
+               data-pswp-width="<?= $w ?>" data-pswp-height="<?= $h ?>">
+              <img src="<?= $imgPath ?>" alt="<?= htmlspecialchars($item['title']) ?>" />
             </a>
 
   <?php /* ——— VIDEOS ——— */
           elseif ($type === 'video'): ?>
-            <div class="overflow-hidden rounded-lg">
-              <video class="w-full h-auto object-contain" controls>
+            <div>
+              <video style="width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:1rem;" controls>
                 <source src="cms/<?= htmlspecialchars($url) ?>" type="video/mp4">
               </video>
             </div>
 
   <?php /* ——— AUDIO ——— */
           elseif ($type === 'audio'): ?>
-            <div class="overflow-hidden rounded-lg">
-              <audio class="w-full" controls>
+            <div style="margin-bottom:1rem;">
+              <audio style="width:100%;" controls>
                 <source src="cms/<?= htmlspecialchars($url) ?>" type="audio/mpeg">
               </audio>
             </div>
@@ -135,7 +151,6 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <?php else: ?>
       <p class="text-gray-500 col-span-4 text-center">No client projects found.</p>
 <?php endif; ?>
-
     </div><!-- /gallery -->
   </div>
 </section>
@@ -144,13 +159,20 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 /* ---------- PhotoSwipe ---------- */
 document.addEventListener('DOMContentLoaded', () => {
   const lightbox = new PhotoSwipeLightbox({
-    gallery:  '#clients-gallery',
-    children: 'a',
+    gallery:'#clients-gallery',
+    children:'a',
     pswpModule: PhotoSwipe,
-    padding: { top:40, bottom:40, left:40, right:40 },
-    bgOpacity: 1,
-    wheelToZoom: true,
-    arrowKeys:   true
+    padding:{top:40,bottom:40,left:40,right:40},
+    bgOpacity:1,
+    zoom: false,
+    wheelToZoom: false,
+    arrowKeys:true,
+    showHideAnimationType: 'zoom',
+    transition: true
+  });
+  lightbox.on('contentClickAction', (e, slide) => {
+    lightbox.pswp.close();
+    return false;
   });
   lightbox.init();
 });

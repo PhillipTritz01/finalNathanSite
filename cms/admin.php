@@ -110,6 +110,147 @@ $items = $conn->query("SELECT * FROM portfolio_items ORDER BY created_at DESC")
 <script src="../public/assets/js/photoswipe-lightbox.umd.min.js"></script>
 
 <style>
+:root {
+  --bg: #f8f9fa;
+  --text: #222;
+  --sidebar-bg: #343a40;
+  --sidebar-text: #fff;
+  --card-bg: #fff;
+  --border: #dee2e6;
+  --btn-bg: #0d6efd;
+  --btn-text: #fff;
+  --btn-border: #0a58ca;
+  --btn-danger-bg: #dc3545;
+  --btn-danger-text: #fff;
+  --btn-danger-border: #b52a37;
+  --input-bg: #fff;
+  --input-text: #222;
+}
+body.dark-mode {
+  --bg: #181a1b;
+  --text: #e0e0e0;
+  --sidebar-bg: #23272b;
+  --sidebar-text: #fff;
+  --card-bg: #23272b;
+  --border: #444;
+  --btn-bg: #2563eb;
+  --btn-text: #fff;
+  --btn-border: #1a4fb4;
+  --btn-danger-bg: #e57373;
+  --btn-danger-text: #fff;
+  --btn-danger-border: #b52a37;
+  --input-bg: #23272b;
+  --input-text: #e0e0e0;
+}
+body, .content { background: var(--bg) !important; color: var(--text) !important; }
+.sidebar { background: var(--sidebar-bg) !important; color: var(--sidebar-text) !important; }
+.card, .portfolio-item { background: var(--card-bg) !important; border-color: var(--border) !important; color: var(--text) !important; }
+
+/* Buttons */
+.btn, .btn-primary {
+  background-color: var(--btn-bg) !important;
+  color: var(--btn-text) !important;
+  border-color: var(--btn-border) !important;
+}
+.btn-primary:hover, .btn-primary:focus {
+  background-color: var(--btn-border) !important;
+  color: var(--btn-text) !important;
+}
+.btn-danger, .btn-outline-danger {
+  background-color: var(--btn-danger-bg) !important;
+  color: var(--btn-danger-text) !important;
+  border-color: var(--btn-danger-border) !important;
+}
+.btn-outline-danger {
+  background: transparent !important;
+  color: var(--btn-danger-bg) !important;
+}
+.btn-outline-danger:hover, .btn-outline-danger:focus {
+  background-color: var(--btn-danger-bg) !important;
+  color: var(--btn-danger-text) !important;
+}
+
+/* Inputs */
+input, textarea, select {
+  background: var(--input-bg) !important;
+  color: var(--input-text) !important;
+  border-color: var(--border) !important;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--btn-bg) !important;
+  outline: none;
+}
+.form-label, label {
+  color: var(--text) !important;
+}
+
+/* Misc */
+.theme-switch-wrap {
+  position: absolute;
+  top: 18px;
+  right: 24px;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  user-select: none;
+}
+.theme-switch-label {
+  font-size: 1rem;
+  color: var(--text);
+  opacity: 0.7;
+  letter-spacing: 0.05em;
+  transition: color 0.3s, opacity 0.3s;
+}
+.theme-switch {
+  width: 56px;
+  height: 28px;
+  background: #e0e0e0;
+  border-radius: 14px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.3s;
+  display: flex;
+  align-items: center;
+}
+body.dark-mode .theme-switch {
+  background: #444;
+}
+.theme-switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+  transition: left 0.3s cubic-bezier(.4,0,.2,1), background 0.3s;
+}
+body.dark-mode .theme-switch-knob {
+  left: 31px;
+  background: #e0e0e0;
+}
+.theme-switch-knob::before {
+  content: '';
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #bbb;
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  opacity: 0.5;
+}
+body.dark-mode .theme-switch-knob::before {
+  background: #222;
+  opacity: 0.5;
+}
+.theme-switch:active .theme-switch-knob {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+}
+
 .sidebar{min-height:100vh;background:#343a40;color:#fff}
 .content{padding:20px}
 .portfolio-item{margin-bottom:25px;padding:15px;border:1px solid #dee2e6;border-radius:6px}
@@ -130,8 +271,21 @@ $items = $conn->query("SELECT * FROM portfolio_items ORDER BY created_at DESC")
 .toast-container{z-index:10860}
 .loading-spinner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);z-index:1}
 .pswp__counter{font-size:1.05rem}
+body, .content, .sidebar, .card, .portfolio-item, input, textarea, select, .btn, .btn-primary, .btn-danger, .btn-outline-danger {
+  transition: 
+    background-color 0.4s cubic-bezier(.4,0,.2,1),
+    color 0.4s cubic-bezier(.4,0,.2,1),
+    border-color 0.4s cubic-bezier(.4,0,.2,1);
+}
 </style>
 </head><body>
+<div class="theme-switch-wrap">
+  <span class="theme-switch-label">DARK</span>
+  <div class="theme-switch" id="themeToggle">
+    <div class="theme-switch-knob"></div>
+  </div>
+  <span class="theme-switch-label">LIGHT</span>
+</div>
 <div class="container-fluid"><div class="row">
 <aside class="col-md-3 col-lg-2 sidebar p-3">
   <h3 class="mb-4">CMS</h3>
@@ -549,6 +703,25 @@ modalEl.addEventListener('hidden.bs.modal',()=>{
     lightbox=null; 
   }
 });
+
+// Theme toggle logic
+function setTheme(mode) {
+  document.body.classList.remove('light-mode', 'dark-mode');
+  document.body.classList.add(mode+'-mode');
+  localStorage.setItem('theme', mode);
+}
+function toggleTheme() {
+  const isDark = document.body.classList.contains('dark-mode');
+  setTheme(isDark ? 'light' : 'dark');
+}
+document.getElementById('themeToggle').onclick = toggleTheme;
+// On load, set theme from localStorage or system
+(function(){
+  const saved = localStorage.getItem('theme');
+  if(saved) setTheme(saved);
+  else if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) setTheme('dark');
+  else setTheme('light');
+})();
 });
 </script>
 </body></html>
