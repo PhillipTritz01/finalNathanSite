@@ -291,6 +291,7 @@ body, .content, .sidebar, .card, .portfolio-item, input, textarea, select, .btn,
   <h3 class="mb-4">CMS</h3>
   <nav class="nav flex-column">
     <span class="nav-link text-white fw-bold">Portfolio</span>
+    <a class="nav-link text-white" href="gallery-settings.php">Gallery Settings</a>
     <a class="nav-link text-white" href="?logout=1">Logout</a>
   </nav>
 </aside>
@@ -301,7 +302,7 @@ body, .content, .sidebar, .card, .portfolio-item, input, textarea, select, .btn,
   <!-- ADD NEW -->
   <div class="card mb-4"><div class="card-body">
     <h5 class="card-title">Add New Portfolio Item</h5>
-    <form method="POST" enctype="multipart/form-data">
+    <form id="addPortfolioForm" method="POST" enctype="multipart/form-data">
       <input type="hidden" name="action" value="add_portfolio">
       <div class="mb-2"><label class="form-label">Title</label><input class="form-control" name="title" required></div>
       <div class="mb-2"><label class="form-label">Description</label><textarea class="form-control" name="description" rows="3" required></textarea></div>
@@ -313,7 +314,7 @@ body, .content, .sidebar, .card, .portfolio-item, input, textarea, select, .btn,
       <div class="mb-2"><label class="form-label">Media Files</label>
         <input type="file" class="form-control" name="media[]" accept="image/*,video/*,audio/*" multiple required>
       </div>
-      <button class="btn btn-primary">Add Item</button>
+      <button type="submit" class="btn btn-primary">Add Item</button>
     </form>
   </div></div>
 
@@ -722,6 +723,29 @@ document.getElementById('themeToggle').onclick = toggleTheme;
   else if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) setTheme('dark');
   else setTheme('light');
 })();
+
+/* Add Portfolio Form AJAX Submission */
+document.getElementById('addPortfolioForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const formData = new FormData(this);
+  
+  fetch('', {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => {
+    if (!response.ok) throw new Error('Network response was not ok');
+    toast('Success', 'Portfolio item added successfully');
+    // Clear the form
+    this.reset();
+    // Reload the page to show the new item
+    location.reload();
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    toast('Error', 'Failed to add portfolio item', false);
+  });
+});
 });
 </script>
 </body></html>

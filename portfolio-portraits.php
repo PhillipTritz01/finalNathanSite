@@ -13,8 +13,8 @@ include 'includes/header.php';
 $conn = getDBConnection();
 $stmt = $conn->prepare("
     SELECT p.*,
-           GROUP_CONCAT(m.media_url)  AS media_urls,
-           GROUP_CONCAT(m.media_type) AS media_types
+           GROUP_CONCAT(m.media_url ORDER BY m.display_order, m.id SEPARATOR '|||')  AS media_urls,
+           GROUP_CONCAT(m.media_type ORDER BY m.display_order, m.id SEPARATOR '|||') AS media_types
       FROM portfolio_items p
  LEFT JOIN portfolio_media  m ON p.id = m.portfolio_item_id
      WHERE p.category = 'portraits'
@@ -28,6 +28,7 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <link  rel="stylesheet" href="public/assets/css/photoswipe.css">
 <script src="public/assets/js/photoswipe.umd.min.js"></script>
 <script src="public/assets/js/photoswipe-lightbox.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/macy@2.5.1/dist/macy.min.js"></script>
 
 <style>
   .pswp__bg      { background:#fff !important; }
@@ -49,36 +50,11 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
   .portfolio-nav-dropdown a:hover { color:#60a5fa; }
   .portfolio-nav-dropdown a.active{ color:#e57373; font-weight:600; }
 
-  .gallery-zoom img {
-    transition: transform 0.4s cubic-bezier(.4,0,.2,1), box-shadow 0.4s cubic-bezier(.4,0,.2,1);
-    will-change: transform;
-  }
-  .gallery-zoom a:hover img,
-  .gallery-zoom a:focus img {
-    transform: scale(1.07);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-    z-index: 2;
-  }
-
-  /* Masonry gallery style */
-  .gallery-masonry {
-    column-count: 3;
-    column-gap: 1rem;
-  }
-  .gallery-masonry img {
-    width: 100%;
-    display: block;
-    margin-bottom: 1rem;
-    border-radius: 8px;
-    break-inside: avoid;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  }
-  @media (max-width: 900px) {
-    .gallery-masonry { column-count: 2; }
-  }
-  @media (max-width: 600px) {
-    .gallery-masonry { column-count: 1; }
-  }
+  .gallery-masonry { padding: 0.5rem; }
+  .gallery-masonry img { width: 100%; display: block; margin-bottom: 0.5rem; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); background: #fff; transition: transform 0.35s ease, box-shadow 0.35s ease; will-change: transform; }
+  .gallery-masonry img:hover { transform: scale(1.04); box-shadow: 0 8px 32px rgba(0,0,0,0.18); z-index: 2; }
+  @media (max-width: 1200px) { .gallery-masonry { padding: 0.5rem; } }
+  .gallery-hidden { opacity: 0; transition: opacity 0.3s; }
 </style>
 
 <!-- identical padding + spacing as clients page -->
@@ -106,11 +82,11 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
 
     <!-- gallery grid (same gap + aspect-ratio logic) -->
-    <div id="portraits-gallery" class="gallery-masonry">
+    <div id="portraits-gallery" class="gallery-masonry gallery-hidden">
 <?php if ($items): ?>
 <?php foreach ($items as $item):
-        $urls  = $item['media_urls']  ? explode(',', $item['media_urls'])  : [];
-        $types = $item['media_types'] ? explode(',', $item['media_types']) : [];
+        $urls  = $item['media_urls']  ? explode('|||', $item['media_urls'])  : [];
+        $types = $item['media_types'] ? explode('|||', $item['media_types']) : [];
 
         foreach ($urls as $i => $url):
           $type = $types[$i] ?? 'image';
@@ -147,14 +123,14 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 /* PhotoSwipe + dropdown */
 document.addEventListener('DOMContentLoaded', () => {
   const lightbox = new PhotoSwipeLightbox({
-    gallery:'#portraits-gallery',
-    children:'a',
+    gallery: '#portraits-gallery',
+    children: 'a',
     pswpModule: PhotoSwipe,
-    padding:{top:40,bottom:40,left:40,right:40},
-    bgOpacity:1,
+    padding: { top: 40, bottom: 40, left: 40, right: 40 },
+    bgOpacity: 1,
     zoom: false,
     wheelToZoom: false,
-    arrowKeys:true,
+    arrowKeys: true,
     showHideAnimationType: 'zoom',
     transition: true
   });
@@ -170,6 +146,44 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.addEventListener('click', e => {
     if (!nav.contains(e.target)) nav.classList.remove('open');
+  });
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+  const macy = Macy({
+    container: '.gallery-masonry',
+    trueOrder: true,
+    waitForImages: false,
+    margin: 2,
+    columns: 4,
+    breakAt: {
+      1200: 3,
+      900: 2,
+      600: 1
+    }
+  });
+  const gallery = document.querySelector('.gallery-masonry');
+  const images = gallery.querySelectorAll('img');
+  let loaded = 0;
+  function showGallery() {
+    gallery.classList.remove('gallery-hidden');
+  }
+  images.forEach(img => {
+    if (img.complete) {
+      loaded++;
+      if (loaded === images.length) {
+        macy.recalculate(true);
+        showGallery();
+      }
+    } else {
+      img.addEventListener('load', () => {
+        loaded++;
+        if (loaded === images.length) {
+          macy.recalculate(true);
+          showGallery();
+        }
+      });
+    }
   });
 });
 </script>

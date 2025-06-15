@@ -13,8 +13,8 @@ include 'includes/header.php';
 $conn = getDBConnection();
 $stmt = $conn->prepare("
     SELECT p.*,
-           GROUP_CONCAT(m.media_url)  AS media_urls,
-           GROUP_CONCAT(m.media_type) AS media_types
+           GROUP_CONCAT(m.media_url ORDER BY m.display_order, m.id SEPARATOR '|||')  AS media_urls,
+           GROUP_CONCAT(m.media_type ORDER BY m.display_order, m.id SEPARATOR '|||') AS media_types
       FROM portfolio_items  p
  LEFT JOIN portfolio_media  m ON p.id = m.portfolio_item_id
      WHERE p.category = 'fineart'
@@ -28,6 +28,7 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <link  rel="stylesheet" href="public/assets/css/photoswipe.css">
 <script src="public/assets/js/photoswipe.umd.min.js"></script>
 <script src="public/assets/js/photoswipe-lightbox.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/macy@2.5.1/dist/macy.min.js"></script>
 
 <style>
   .pswp__bg      { background:#fff !important; }
@@ -61,25 +62,13 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
     z-index: 2;
   }
 
-  /* Masonry gallery style */
-  .gallery-masonry {
-    column-count: 3;
-    column-gap: 1rem;
-  }
-  .gallery-masonry img {
-    width: 100%;
-    display: block;
-    margin-bottom: 1rem;
-    border-radius: 8px;
-    break-inside: avoid;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  }
-  @media (max-width: 900px) {
-    .gallery-masonry { column-count: 2; }
-  }
-  @media (max-width: 600px) {
-    .gallery-masonry { column-count: 1; }
-  }
+  /* Refined Masonry gallery style for organic look */
+  .gallery-masonry { padding: 0.5rem; }
+  .gallery-masonry img { width: 100%; display: block; margin-bottom: 0.5rem; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); background: #fff; transition: transform 0.35s ease, box-shadow 0.35s ease; will-change: transform; }
+  .gallery-masonry img:hover { transform: scale(1.04); box-shadow: 0 8px 32px rgba(0,0,0,0.18); z-index: 2; }
+  @media (max-width: 1200px) { .gallery-masonry { padding: 0.5rem; } }
+
+  .gallery-hidden { opacity: 0; transition: opacity 0.3s; }
 </style>
 
 <!-- same spacing & edge-to-edge look as clients page -->
@@ -107,11 +96,11 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
 
     <!-- masonry-like gallery -->
-    <div id="fineart-gallery" class="gallery-masonry">
+    <div id="fineart-gallery" class="gallery-masonry gallery-hidden">
 <?php if ($items): ?>
 <?php foreach ($items as $item):
-        $urls  = $item['media_urls']  ? explode(',', $item['media_urls'])  : [];
-        $types = $item['media_types'] ? explode(',', $item['media_types']) : [];
+        $urls  = $item['media_urls']  ? explode('|||', $item['media_urls'])  : [];
+        $types = $item['media_types'] ? explode('|||', $item['media_types']) : [];
 
         foreach ($urls as $i => $url):
           $type = $types[$i] ?? 'image';
@@ -124,18 +113,14 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
       </a>
 
 <?php   elseif ($type === 'video'): ?>
-      <div>
-        <video style="width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:1rem;" controls>
-          <source src="<?= $path ?>" type="video/mp4">
-        </video>
-      </div>
+      <video style="width:100%;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:0.5rem;background:#fff;" controls>
+        <source src="<?= $path ?>" type="video/mp4">
+      </video>
 
 <?php   elseif ($type === 'audio'): ?>
-      <div style="margin-bottom:1rem;">
-        <audio style="width:100%;" controls>
-          <source src="<?= $path ?>" type="audio/mpeg">
-        </audio>
-      </div>
+      <audio style="width:100%;margin-bottom:0.5rem;background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.08);padding:0.5rem;" controls>
+        <source src="<?= $path ?>" type="audio/mpeg">
+      </audio>
 <?php   endif; endforeach; endforeach;
       else: ?>
       <p class="text-gray-500 col-span-4 text-center">No fine-art projects found.</p>
@@ -171,6 +156,44 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.addEventListener('click', e => {
     if (!nav.contains(e.target)) nav.classList.remove('open');
+  });
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+  const macy = Macy({
+    container: '.gallery-masonry',
+    trueOrder: true,
+    waitForImages: false,
+    margin: 2,
+    columns: 4,
+    breakAt: {
+      1200: 3,
+      900: 2,
+      600: 1
+    }
+  });
+  const gallery = document.querySelector('.gallery-masonry');
+  const images = gallery.querySelectorAll('img');
+  let loaded = 0;
+  function showGallery() {
+    gallery.classList.remove('gallery-hidden');
+  }
+  images.forEach(img => {
+    if (img.complete) {
+      loaded++;
+      if (loaded === images.length) {
+        macy.recalculate(true);
+        showGallery();
+      }
+    } else {
+      img.addEventListener('load', () => {
+        loaded++;
+        if (loaded === images.length) {
+          macy.recalculate(true);
+          showGallery();
+        }
+      });
+    }
   });
 });
 </script>
