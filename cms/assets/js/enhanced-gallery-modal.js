@@ -1,0 +1,1 @@
+// Enhanced Gallery Modal placeholder

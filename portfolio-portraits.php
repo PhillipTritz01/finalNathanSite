@@ -150,6 +150,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 document.addEventListener('DOMContentLoaded', function () {
+  const gallery = document.querySelector('.gallery-masonry');
+  // Add gallery animation class from CMS settings BEFORE Macy.js
+  const anim = localStorage.getItem('galleryAnimation') || 'rotate';
+  gallery.classList.add('animation-' + anim);
   const macy = Macy({
     container: '.gallery-masonry',
     trueOrder: true,
@@ -162,11 +166,13 @@ document.addEventListener('DOMContentLoaded', function () {
       600: 1
     }
   });
-  const gallery = document.querySelector('.gallery-masonry');
   const images = gallery.querySelectorAll('img');
   let loaded = 0;
   function showGallery() {
     gallery.classList.remove('gallery-hidden');
+    // Add gallery animation class from CMS settings
+    const anim = localStorage.getItem('galleryAnimation') || 'rotate';
+    gallery.classList.add('animation-' + anim);
   }
   images.forEach(img => {
     if (img.complete) {

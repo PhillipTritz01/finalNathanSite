@@ -199,6 +199,9 @@ document.addEventListener('DOMContentLoaded', () => {
   let loaded = 0;
   function showGallery() {
     gallery.classList.remove('gallery-hidden');
+    // Add gallery animation class from CMS settings
+    const anim = localStorage.getItem('galleryAnimation') || 'rotate';
+    gallery.classList.add('animation-' + anim);
   }
   const images = gallery.querySelectorAll('img');
   images.forEach(img => {

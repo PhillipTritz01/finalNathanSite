@@ -261,7 +261,7 @@ body.dark-mode .theme-switch-knob::before {
 .delete-selected[disabled]{opacity:.5;pointer-events:none}
 .delete-selected.active{background:#dc3545;color:#fff;border-color:#b52a37;box-shadow:0 0 0 .2rem rgba(220,53,69,.25)}
 .add-media-input{min-width:180px}
-.gallery-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.gallery-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-height:70vh;overflow-y:auto}
 .gallery-grid .media-wrapper{position:relative}
 .gallery-grid img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:6px;cursor:pointer;transition:transform .2s}
 .gallery-grid img:hover{transform:scale(1.05)}
@@ -276,6 +276,301 @@ body, .content, .sidebar, .card, .portfolio-item, input, textarea, select, .btn,
     background-color 0.4s cubic-bezier(.4,0,.2,1),
     color 0.4s cubic-bezier(.4,0,.2,1),
     border-color 0.4s cubic-bezier(.4,0,.2,1);
+}
+/* Enhanced Modal Styles */
+.modal-xl { 
+  max-width: min(95vw, 1400px); 
+}
+.modal-dialog { 
+  height: min(90vh, 800px); 
+  margin: 1.5rem auto; 
+  display: flex; 
+  flex-direction: column; 
+  justify-content: center; 
+}
+.modal-content { 
+  height: 100%; 
+  display: flex; 
+  flex-direction: column; 
+  border-radius: 12px;
+  overflow: hidden;
+}
+.modal-body { 
+  flex: 1 1 auto; 
+  overflow-y: auto; 
+  scroll-behavior: auto; /* Changed from smooth to auto for better performance */
+  padding: 1rem;
+  /* Optimize scrolling performance */
+  -webkit-overflow-scrolling: touch;
+  will-change: scroll-position;
+  transform: translateZ(0); /* Force hardware acceleration */
+}
+
+/* Gallery Grid Responsive */
+.gallery-grid { 
+  display: grid; 
+  gap: 12px; 
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+@media (min-width: 768px) {
+  .gallery-grid { 
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
+    gap: 15px;
+  }
+}
+@media (min-width: 1200px) {
+  .gallery-grid { 
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
+    gap: 18px;
+  }
+}
+
+/* Media Item Enhancements */
+.gallery-grid .media-wrapper {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #2a2a2a;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  /* Performance optimizations */
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  contain: layout style paint;
+}
+.gallery-grid .media-wrapper:hover {
+  transform: translateY(-2px) translateZ(0);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+}
+.gallery-grid .media-wrapper:focus-within {
+  outline: 2px solid #0d6efd;
+  outline-offset: 2px;
+}
+.gallery-grid .media-wrapper.loaded {
+  animation: fadeInUp 0.3s ease-out;
+}
+.gallery-grid .media-wrapper.error {
+  background: #f8f9fa;
+  border: 2px dashed #dee2e6;
+}
+.gallery-grid img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.2s ease;
+  /* Performance optimizations */
+  will-change: transform, opacity;
+  transform: translateZ(0);
+}
+.gallery-grid img:hover {
+  opacity: 0.9;
+}
+.gallery-grid img[data-error="true"] {
+  opacity: 0.5;
+  filter: grayscale(1);
+}
+
+/* Smooth animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) translateZ(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) translateZ(0);
+  }
+}
+
+/* Optimize scrolling container */
+.gallery-grid {
+  /* Enable GPU acceleration for smooth scrolling */
+  transform: translateZ(0);
+  will-change: scroll-position;
+  contain: layout style paint;
+}
+
+/* Enhanced Checkbox Styles */
+.gallery-grid .delete-check, .delete-check, .select-all-modal {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  background: rgba(255,255,255,0.95);
+  border: 2px solid #dee2e6;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.gallery-grid .delete-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Checkmark styling */
+.delete-check:checked, .select-all-modal:checked {
+  background: #28a745;
+  border-color: #28a745;
+  color: white;
+}
+
+.delete-check:checked::after, .select-all-modal:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 14px;
+  font-weight: bold;
+  color: white;
+  line-height: 1;
+}
+
+/* Indeterminate state for select all */
+.select-all-modal:indeterminate {
+  background: #ffc107;
+  border-color: #ffc107;
+}
+
+.select-all-modal:indeterminate::after {
+  content: '−';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 16px;
+  font-weight: bold;
+  color: white;
+  line-height: 1;
+}
+
+/* Focus states */
+.delete-check:focus, .select-all-modal:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(40,167,69,0.25);
+  border-color: #28a745;
+}
+
+/* Hover states */
+.delete-check:hover, .select-all-modal:hover {
+  border-color: #28a745;
+  background: rgba(40,167,69,0.1);
+}
+
+/* Dashboard checkbox styling */
+.media-preview-container .delete-check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 18px;
+  height: 18px;
+  z-index: 2;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.media-preview-container .delete-check:checked::after {
+  font-size: 12px;
+}
+
+/* Loading and Error States */
+.loading-spinner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.8);
+  z-index: 100;
+  backdrop-filter: blur(2px);
+}
+.error-message {
+  margin: 2rem;
+  border-radius: 8px;
+}
+.empty-state {
+  padding: 4rem 2rem;
+}
+
+/* Selection Counter */
+#selectionCount {
+  font-size: 0.875rem;
+  min-width: 80px;
+  text-align: right;
+}
+
+/* Select All Label Enhancement */
+.form-check label[for="selectAllModal"] {
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  user-select: none;
+  cursor: pointer;
+}
+
+.form-check label[for="selectAllModal"]:hover {
+  color: #e9ecef !important;
+}
+
+/* Pagination */
+.pagination-container .pagination {
+  margin: 0;
+}
+.pagination-container .page-link {
+  background: #343a40;
+  border-color: #495057;
+  color: #fff;
+}
+.pagination-container .page-link:hover {
+  background: #495057;
+  border-color: #6c757d;
+  color: #fff;
+}
+.pagination-container .page-item.active .page-link {
+  background: #0d6efd;
+  border-color: #0d6efd;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 767px) {
+  .modal-dialog {
+    height: 95vh;
+    margin: 0.5rem;
+  }
+  .modal-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch !important;
+    padding: 1rem;
+  }
+  .modal-header > div {
+    justify-content: center;
+  }
+  .gallery-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+  }
+  .gallery-grid .delete-check {
+    width: 22px;
+    height: 22px;
+    top: 6px;
+    right: 6px;
+  }
+  .gallery-grid .delete-check:checked::after {
+    font-size: 16px;
+  }
+  .select-all-modal {
+    width: 22px;
+    height: 22px;
+  }
+  .select-all-modal:checked::after, .select-all-modal:indeterminate::after {
+    font-size: 16px;
+  }
 }
 </style>
 </head><body>
@@ -368,30 +663,73 @@ body, .content, .sidebar, .card, .portfolio-item, input, textarea, select, .btn,
 
 </main></div></div>
 
-<!-- shared gallery modal -->
-<div class="modal fade" id="galleryModal" tabindex="-1">
-  <div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content bg-dark">
-    <form class="delete-media-form">
-      <div class="modal-header border-0 d-flex align-items-center justify-content-between">
-        <div class="form-check d-flex align-items-center">
-          <input class="form-check-input select-all-modal" type="checkbox" id="selectAllModal">
-          <label for="selectAllModal" class="form-label mb-0 ms-2 text-white">Select All</label>
+<!-- Enhanced Gallery Modal -->
+<div class="modal fade" id="galleryModal" tabindex="-1" aria-labelledby="galleryModalLabel" aria-describedby="galleryModalDesc">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content bg-dark">
+      <form class="delete-media-form" role="form" aria-label="Media management form">
+        <div class="modal-header border-0 d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-3">
+            <h5 id="galleryModalLabel" class="text-white mb-0">Gallery Manager</h5>
+            <div class="form-check d-flex align-items-center">
+              <input class="form-check-input select-all-modal" type="checkbox" id="selectAllModal" aria-describedby="selectAllHelp">
+              <label for="selectAllModal" class="form-label mb-0 ms-2 text-white fw-semibold">Select All</label>
+            </div>
+            <small id="selectAllHelp" class="text-muted d-none">Use Ctrl+A to select all items</small>
+          </div>
+          <div class="d-flex gap-2">
+            <span id="selectionCount" class="text-white-50 small align-self-center me-2" aria-live="polite"></span>
+            <button type="button" class="btn btn-outline-light btn-sm" id="refreshModal" title="Refresh gallery">
+              <i class="bi bi-arrow-clockwise"></i>
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" aria-label="Close modal">
+              <i class="bi bi-x-lg"></i> Close
+            </button>
+            <button type="submit" class="btn btn-danger btn-sm delete-selected" disabled aria-describedby="deleteHelp">
+              <i class="bi bi-trash"></i> Delete Selected
+            </button>
+          </div>
         </div>
-        <div class="d-flex gap-2">
-          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
-            <i class="bi bi-x-lg"></i> Close
-          </button>
-          <button type="submit" class="btn btn-danger btn-sm delete-selected" disabled>
-            <i class="bi bi-trash"></i> Delete Selected
-          </button>
+        <div class="modal-body position-relative" role="main">
+          <div id="galleryModalDesc" class="visually-hidden">Gallery view with selectable media items. Use arrow keys to navigate, space to select, and Enter to view full size.</div>
+          <div class="loading-spinner d-none" role="status" aria-label="Loading gallery">
+            <div class="spinner-border text-light">
+              <span class="visually-hidden">Loading gallery...</span>
+            </div>
+          </div>
+          <div class="error-message d-none alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span class="error-text">An error occurred while loading the gallery.</span>
+            <button type="button" class="btn btn-sm btn-outline-danger ms-2" id="retryLoad">Retry</button>
+          </div>
+          <div class="empty-state d-none text-center text-white-50 py-5">
+            <i class="bi bi-images display-4 mb-3"></i>
+            <p>No media items found in this gallery.</p>
+          </div>
+          <div class="gallery-grid" role="grid" aria-label="Media gallery"></div>
+          <div class="pagination-container d-none mt-3 d-flex justify-content-center">
+            <nav aria-label="Gallery pagination">
+              <ul class="pagination pagination-sm">
+                <li class="page-item" id="prevPage">
+                  <button class="page-link" type="button" aria-label="Previous page">
+                    <i class="bi bi-chevron-left"></i>
+                  </button>
+                </li>
+                <li class="page-item active" id="currentPage">
+                  <span class="page-link">1</span>
+                </li>
+                <li class="page-item" id="nextPage">
+                  <button class="page-link" type="button" aria-label="Next page">
+                    <i class="bi bi-chevron-right"></i>
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          </div>
         </div>
-      </div>
-      <div class="modal-body position-relative">
-        <div class="loading-spinner d-none"><div class="spinner-border text-light"><span class="visually-hidden">Loading</span></div></div>
-        <div class="gallery-grid"></div>
-      </div>
-    </form>
-  </div></div>
+      </form>
+    </div>
+  </div>
 </div>
 
 <!-- toast -->
@@ -522,22 +860,22 @@ const top=document.getElementById('backToTop');
 window.onscroll=()=>top.style.display=scrollY>300?'block':'none';
 top.onclick=()=>scrollTo({top:0,behavior:'smooth'});
 
-/* modal controller */
-const modalEl=document.getElementById('galleryModal');
-const modal   = new bootstrap.Modal(modalEl);
-const grid    = modalEl.querySelector('.gallery-grid');
+/* Enhanced Modal Controller */
+const modalEl = document.getElementById('galleryModal');
+const modal = new bootstrap.Modal(modalEl);
+const grid = modalEl.querySelector('.gallery-grid');
 const spinner = modalEl.querySelector('.loading-spinner');
 const selectAll = modalEl.querySelector('.select-all-modal');
-const delBtn  = modalEl.querySelector('.delete-selected');
-let currentIds=[], selected=new Set(), lightbox=null, currentPortfolioId=null;
+const delBtn = modalEl.querySelector('.delete-selected');
+let currentIds = [], selected = new Set(), lightbox = null, currentPortfolioId = null;
 
 /* open modal from +N */
-document.querySelectorAll('[data-bs-target="#galleryModal"]').forEach(btn=>{
-  btn.onclick=()=>{
-    const items=JSON.parse(btn.dataset.items||'[]');
-    currentIds = items.map(x=>x.id);
-    selected.clear(); 
-    buildGrid(items); 
+document.querySelectorAll('[data-bs-target="#galleryModal"]').forEach(btn => {
+  btn.onclick = () => {
+    const items = JSON.parse(btn.dataset.items || '[]');
+    currentIds = items.map(x => x.id);
+    selected.clear();
+    buildGrid(items);
     modal.show();
     // Store the portfolio id for dashboard sync
     currentPortfolioId = btn.getAttribute('data-portfolio-id');
@@ -545,47 +883,51 @@ document.querySelectorAll('[data-bs-target="#galleryModal"]').forEach(btn=>{
 });
 
 /* build grid + PhotoSwipe anchors */
-function buildGrid(items){
-  spinner.classList.remove('d-none'); 
-  grid.innerHTML='';
-  const pswpDiv=document.createElement('div');
-  pswpDiv.className='pswp-gallery'; 
-  pswpDiv.id='pswp-'+Date.now(); 
-  pswpDiv.style.display='none';
+function buildGrid(items) {
+  spinner.classList.remove('d-none');
+  grid.innerHTML = '';
+  
+  // Clean up old lightbox
+  if (lightbox) {
+    lightbox.destroy();
+    lightbox = null;
+  }
+  
+  const pswpDiv = document.createElement('div');
+  pswpDiv.className = 'pswp-gallery';
+  pswpDiv.id = 'pswp-' + Date.now();
+  pswpDiv.style.display = 'none';
   grid.before(pswpDiv);
 
-  items.forEach((it,i)=>{
-    const wrap=document.createElement('div');
-    wrap.className='media-wrapper position-relative';
-    wrap.innerHTML=`<img src="${it.media_url}" loading="lazy">
+  items.forEach((it, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'media-wrapper position-relative';
+    wrap.innerHTML = `<img src="${it.media_url}" loading="lazy">
                     <input type="checkbox" class="form-check-input delete-check" data-media-id="${it.id}">`;
     grid.appendChild(wrap);
 
-    if(it.media_url.match(/\.(jpe?g|png|gif|webp)$/i)){
-      const a=document.createElement('a'); 
-      a.href=it.media_url;
-      a.dataset.pswpWidth=1600; 
-      a.dataset.pswpHeight=1200;
+    if (it.media_url.match(/\.(jpe?g|png|gif|webp)$/i)) {
+      const a = document.createElement('a');
+      a.href = it.media_url;
+      a.dataset.pswpWidth = 1600;
+      a.dataset.pswpHeight = 1200;
       pswpDiv.appendChild(a);
-      wrap.querySelector('img').onclick=()=>{
-        if(lightbox) lightbox.loadAndOpen(i);
+      wrap.querySelector('img').onclick = () => {
+        if (lightbox) lightbox.loadAndOpen(i);
       };
-      wrap.querySelector('img').style.cursor='zoom-in';
+      wrap.querySelector('img').style.cursor = 'zoom-in';
     }
   });
 
   /* PhotoSwipe instance */
-  if(lightbox) {
-    lightbox.destroy();
-  }
   lightbox = new PhotoSwipeLightbox({
-    gallery:'#'+pswpDiv.id, 
-    children:'a',
-    pswpModule:PhotoSwipe, 
-    wheelToZoom:true, 
-    arrowKeys:true,
-    padding:{top:40,bottom:40,left:40,right:40}, 
-    bgOpacity:1
+    gallery: '#' + pswpDiv.id,
+    children: 'a',
+    pswpModule: PhotoSwipe,
+    wheelToZoom: true,
+    arrowKeys: true,
+    padding: { top: 40, bottom: 40, left: 40, right: 40 },
+    bgOpacity: 1
   });
   lightbox.init();
 
@@ -594,116 +936,134 @@ function buildGrid(items){
   syncModalUI();
 }
 
-/* checkbox handlers in modal */
-function attachCheckboxEvents(){
-  // Always clear and rebuild selected set based on checked boxes
-  selected.clear();
-  grid.querySelectorAll('.delete-check').forEach(cb=>{
-    if(cb.checked) selected.add(+cb.dataset.mediaId);
-    cb.onchange=()=>{
-      if(cb.checked) {
-        selected.add(+cb.dataset.mediaId);
-      } else {
-        selected.delete(+cb.dataset.mediaId);
-      }
+/* checkbox events */
+function attachCheckboxEvents() {
+  grid.querySelectorAll('.delete-check').forEach(cb => {
+    cb.onchange = () => {
+      const id = parseInt(cb.dataset.mediaId);
+      if (cb.checked) selected.add(id);
+      else selected.delete(id);
       syncModalUI();
     };
   });
-  selectAll.onchange=()=>{
-    const isChecked = selectAll.checked;
-    selected.clear();
-    grid.querySelectorAll('.delete-check').forEach(cb=>{
-      cb.checked = isChecked;
-      if(isChecked) {
-        selected.add(+cb.dataset.mediaId);
-      }
-    });
-    syncModalUI();
-  };
-  syncModalUI(); // Always sync UI after attaching events
 }
 
-function syncModalUI(){
-  // Rebuild selected set based on checked boxes
-  selected.clear();
-  const boxes = grid.querySelectorAll('.delete-check');
-  boxes.forEach(cb=>{ if(cb.checked) selected.add(+cb.dataset.mediaId); });
-  delBtn.disabled = !selected.size;
-  delBtn.classList.toggle('active', selected.size > 0);
-  const total = boxes.length;
-  const checked = selected.size;
-  selectAll.indeterminate = checked > 0 && checked < total;
-  selectAll.checked = checked === total && total > 0;
+/* sync select all + delete button */
+function syncModalUI() {
+  const total = currentIds.length;
+  const selectedCount = selected.size;
+  
+  if (selectedCount === 0) {
+    selectAll.checked = false;
+    selectAll.indeterminate = false;
+  } else if (selectedCount === total) {
+    selectAll.checked = true;
+    selectAll.indeterminate = false;
+  } else {
+    selectAll.checked = false;
+    selectAll.indeterminate = true;
+  }
+  
+  delBtn.disabled = selectedCount === 0;
+  
+  const selectionCount = modalEl.querySelector('#selectionCount');
+  if (selectionCount) {
+    if (selectedCount === 0) {
+      selectionCount.textContent = '';
+    } else {
+      const percentage = Math.round((selectedCount / total) * 100);
+      selectionCount.textContent = `${selectedCount} of ${total} selected (${percentage}%)`;
+    }
+  }
 }
 
-/* submit delete in modal */
-modalEl.querySelector('.delete-media-form').onsubmit=e=>{
-  e.preventDefault();
-  if(!selected.size||!confirm('Delete selected?')) return;
-  spinner.classList.remove('d-none');
-  const idsToDelete = Array.from(selected);
-  postJSON('api/delete_media.php',{media_ids:idsToDelete})
-    .then(()=>{
-      // Remove deleted media from grid
-      idsToDelete.forEach(id => {
-        const cb = grid.querySelector('.delete-check[data-media-id="'+id+'"]');
-        if(cb){
-          const wrap = cb.closest('.media-wrapper');
-          if(wrap) wrap.remove();
-        }
-      });
-      // Update currentIds and selected
-      currentIds = currentIds.filter(id => !idsToDelete.includes(id));
-      selected.clear();
-      spinner.classList.add('d-none');
-      // --- Update dashboard +N count and data-items ---
-      if(currentPortfolioId){
-        const dashCard = document.querySelector('.portfolio-item[id="item-'+currentPortfolioId+'"]');
-        if(dashCard){
-          const plusN = dashCard.querySelector('[data-bs-toggle="modal"][data-bs-target="#galleryModal"]');
-          if(plusN){
-            let items = [];
-            try {
-              items = JSON.parse(plusN.getAttribute('data-items')||'[]');
-            } catch(e) {}
-            // Remove deleted ids from items
-            items = items.filter(m=>!idsToDelete.includes(m.id));
-            plusN.setAttribute('data-items', JSON.stringify(items));
-            // Update the +N text or hide if not needed
-            const n = items.length - 8;
-            if(n > 0){
-              plusN.textContent = '+'+n;
-              plusN.style.display = '';
-            } else {
-              plusN.style.display = 'none';
-            }
-          }
-        }
-      }
-      // If no media left, close modal and show toast
-      if(grid.querySelectorAll('.media-wrapper').length === 0){
-        modal.hide();
-        toast('Info','All media deleted.');
-      } else {
-        attachCheckboxEvents();
-        syncModalUI();
-      }
-    })
-    .catch(()=>{
-      spinner.classList.add('d-none');
-      toast('Error','Delete failed',false);
-    });
+/* select all handler */
+selectAll.onchange = () => {
+  const shouldSelect = selectAll.checked;
+  grid.querySelectorAll('.delete-check').forEach(cb => {
+    cb.checked = shouldSelect;
+    const id = parseInt(cb.dataset.mediaId);
+    if (shouldSelect) selected.add(id);
+    else selected.delete(id);
+  });
+  syncModalUI();
 };
 
-/* reset on close */
-modalEl.addEventListener('hidden.bs.modal',()=>{
-  grid.innerHTML=''; 
-  selected.clear(); 
-  if(lightbox){ 
-    lightbox.destroy(); 
-    lightbox=null; 
+/* delete selected media */
+modalEl.querySelector('.delete-media-form').onsubmit = async (e) => {
+  e.preventDefault();
+  if (selected.size === 0) return toast('Warning', 'No items selected');
+  
+  const count = selected.size;
+  if (!confirm(`Delete ${count} selected item${count > 1 ? 's' : ''}?`)) return;
+  
+  spinner.classList.remove('d-none');
+  
+  try {
+    const idsToDelete = Array.from(selected);
+    const formData = new FormData();
+    formData.append('delete_media', '1');
+    idsToDelete.forEach(id => formData.append('media_ids[]', id));
+    
+    const response = await fetch('', { method: 'POST', body: formData });
+    if (!response.ok) throw new Error('Network response was not ok');
+    
+    // Remove items from DOM
+    idsToDelete.forEach(id => {
+      const cb = grid.querySelector(`[data-media-id="${id}"]`);
+      if (cb) cb.closest('.media-wrapper')?.remove();
+    });
+    
+    // Update state
+    currentIds = currentIds.filter(id => !idsToDelete.includes(id));
+    selected.clear();
+    
+    // Update dashboard
+    updateDashboard(idsToDelete);
+    
+    if (grid.querySelectorAll('.media-wrapper').length === 0) {
+      modal.hide();
+      toast('Info', 'All media deleted.');
+    } else {
+      attachCheckboxEvents();
+      syncModalUI();
+    }
+    
+    toast('Success', `${count} item${count > 1 ? 's' : ''} deleted successfully`);
+    
+  } catch (error) {
+    console.error('Delete failed:', error);
+    toast('Error', 'Delete failed', false);
+  } finally {
+    spinner.classList.add('d-none');
   }
-});
+};
+
+function updateDashboard(deletedIds) {
+  if (!currentPortfolioId) return;
+  
+  const dashCard = document.querySelector(`#item-${currentPortfolioId}`);
+  if (!dashCard) return;
+  
+  const plusN = dashCard.querySelector('[data-bs-toggle="modal"][data-bs-target="#galleryModal"]');
+  if (!plusN) return;
+  
+  try {
+    let items = JSON.parse(plusN.getAttribute('data-items') || '[]');
+    items = items.filter(m => !deletedIds.includes(m.id));
+    plusN.setAttribute('data-items', JSON.stringify(items));
+    
+    const n = items.length - 8;
+    if (n > 0) {
+      plusN.textContent = '+' + n;
+      plusN.style.display = '';
+    } else {
+      plusN.style.display = 'none';
+    }
+  } catch (error) {
+    console.error('Failed to update dashboard:', error);
+  }
+}
 
 // Theme toggle logic
 function setTheme(mode) {
