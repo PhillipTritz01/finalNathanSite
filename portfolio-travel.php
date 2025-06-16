@@ -70,6 +70,55 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
   @media (max-width: 1200px) { .gallery-masonry { padding: 0.5rem; } }
 
   .gallery-hidden { opacity: 0; transition: opacity 0.3s; }
+
+  /* Refresh Animations */
+  .refresh-fade { opacity: 0; animation: fadeIn 0.8s ease-out forwards; }
+  .refresh-slideUp { opacity: 0; transform: translateY(30px); animation: slideUp 0.8s ease-out forwards; }
+  .refresh-slideDown { opacity: 0; transform: translateY(-30px); animation: slideDown 0.8s ease-out forwards; }
+  .refresh-slideLeft { opacity: 0; transform: translateX(30px); animation: slideLeft 0.8s ease-out forwards; }
+  .refresh-slideRight { opacity: 0; transform: translateX(-30px); animation: slideRight 0.8s ease-out forwards; }
+  .refresh-zoom { opacity: 0; transform: scale(0.9); animation: zoomIn 0.8s ease-out forwards; }
+  .refresh-bounce { opacity: 0; transform: scale(0.8); animation: bounceIn 0.9s ease-out forwards; }
+  .refresh-flip { opacity: 0; transform: rotateY(90deg); animation: flipIn 0.8s ease-out forwards; }
+  .refresh-rotate { opacity: 0; transform: rotate(10deg) scale(0.9); animation: rotateIn 0.8s ease-out forwards; }
+  .refresh-elastic { opacity: 0; transform: scale(0.7); animation: elasticIn 1s ease-out forwards; }
+
+  @keyframes fadeIn {
+    to { opacity: 1; }
+  }
+  @keyframes slideUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideDown {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideLeft {
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes slideRight {
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes zoomIn {
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes bounceIn {
+    0% { opacity: 0; transform: scale(0.8); }
+    50% { opacity: 0.8; transform: scale(1.05); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  @keyframes flipIn {
+    to { opacity: 1; transform: rotateY(0deg); }
+  }
+  @keyframes rotateIn {
+    to { opacity: 1; transform: rotate(0deg) scale(1); }
+  }
+  @keyframes elasticIn {
+    0% { opacity: 0; transform: scale(0.7); }
+    40% { opacity: 0.8; transform: scale(1.1); }
+    60% { opacity: 0.9; transform: scale(0.95); }
+    80% { opacity: 0.95; transform: scale(1.02); }
+    100% { opacity: 1; transform: scale(1); }
+  }
 </style>
 
 <!-- identical spacing & layout as clients -->
@@ -165,9 +214,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 document.addEventListener('DOMContentLoaded', function () {
   const gallery = document.querySelector('.gallery-masonry');
+  
   // Add gallery animation class from CMS settings BEFORE Macy.js
-  const anim = localStorage.getItem('galleryAnimation') || 'rotate';
-  gallery.classList.add('animation-' + anim);
+  const galleryAnim = localStorage.getItem('galleryAnimation') || 'rotate';
+  gallery.classList.add('animation-' + galleryAnim);
+  
+  // Add refresh animation class from CMS settings
+  const refreshAnim = localStorage.getItem('refreshAnimation') || 'fade';
+  gallery.classList.add('refresh-' + refreshAnim);
+  
   const macy = Macy({
     container: '.gallery-masonry',
     trueOrder: true,
@@ -180,14 +235,16 @@ document.addEventListener('DOMContentLoaded', function () {
       600: 1
     }
   });
+  
   const images = gallery.querySelectorAll('img');
   let loaded = 0;
+  
   function showGallery() {
     gallery.classList.remove('gallery-hidden');
-    // Add gallery animation class from CMS settings
-    const anim = localStorage.getItem('galleryAnimation') || 'rotate';
-    gallery.classList.add('animation-' + anim);
+    // Gallery is already set up with refresh animation class
+    // The CSS animation will trigger automatically
   }
+  
   images.forEach(img => {
     if (img.complete) {
       loaded++;

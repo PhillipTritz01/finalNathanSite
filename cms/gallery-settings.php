@@ -185,7 +185,22 @@ body.dark-mode .gallery-settings-info {
           <option value="border">Border Pulse</option>
         </select>
       </div>
-      <div class="gallery-settings-info" style="font-size:0.97em;">This animation will be used for all portfolio galleries. Refresh a portfolio page to see the effect.</div>
+      <div class="mb-3">
+        <label for="refreshAnimation" class="form-label">Refresh Animation</label>
+        <select id="refreshAnimation" class="form-select">
+          <option value="fade">Fade In</option>
+          <option value="slideUp">Slide Up</option>
+          <option value="slideDown">Slide Down</option>
+          <option value="slideLeft">Slide Left</option>
+          <option value="slideRight">Slide Right</option>
+          <option value="zoom">Zoom In</option>
+          <option value="bounce">Bounce In</option>
+          <option value="flip">Flip In</option>
+          <option value="rotate">Rotate In</option>
+          <option value="elastic">Elastic</option>
+        </select>
+      </div>
+      <div class="gallery-settings-info" style="font-size:0.97em;">Gallery animation is used for resizing the screen. Refresh animation is used when portfolio pages load. Refresh a portfolio page to see the effects.</div>
     </div>
   </div>
 </main></div></div>
@@ -213,7 +228,17 @@ if(animSelect) {
   animSelect.value = localStorage.getItem('galleryAnimation') || 'rotate';
   animSelect.onchange = function() {
     localStorage.setItem('galleryAnimation', this.value);
-    alert('Animation style saved! Refresh a portfolio page to see the effect.');
+    alert('Gallery animation saved! Refresh a portfolio page to see the effect.');
+  };
+}
+
+// Refresh animation selector logic
+const refreshAnimSelect = document.getElementById('refreshAnimation');
+if(refreshAnimSelect) {
+  refreshAnimSelect.value = localStorage.getItem('refreshAnimation') || 'fade';
+  refreshAnimSelect.onchange = function() {
+    localStorage.setItem('refreshAnimation', this.value);
+    alert('Refresh animation saved! Refresh a portfolio page to see the effect.');
   };
 }
 </script>
