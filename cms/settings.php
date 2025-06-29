@@ -107,6 +107,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $success = 'Password changed successfully!';
                 }
             }
+        } elseif ($action === 'change_timezone') {
+            $newTZ = SecurityHelper::sanitizeInput($_POST['new_timezone'] ?? ($_POST['timezone'] ?? ''), 'string');
+            if (!in_array($newTZ, timezone_identifiers_list())) {
+                $error = 'Invalid timezone selected.';
+            } else {
+                try {
+                    $conn->exec("CREATE TABLE IF NOT EXISTS site_settings (key TEXT PRIMARY KEY, value TEXT)");
+                    $stmt=$conn->prepare("INSERT INTO site_settings(key,value) VALUES('timezone',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value");
+                    $stmt->execute([$newTZ]);
+                    date_default_timezone_set($newTZ);
+                    $success = 'Timezone updated to '.htmlspecialchars($newTZ);
+                    SecurityHelper::logSecurityEvent('TIMEZONE_CHANGED',$newTZ);
+                }catch(Exception $e){
+                    $error='Failed to update timezone.';
+                }
+            }
         }
     }
 }
@@ -115,6 +131,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $stmt = $conn->prepare("SELECT username, email, created_at, last_login FROM admin_users WHERE id = ?");
 $stmt->execute([$userId]);
 $userInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+
+$currentTZ='UTC';
+try{ $tzStmt=$conn->prepare("SELECT value FROM site_settings WHERE key='timezone'"); $tzStmt->execute(); $currentTZ=$tzStmt->fetchColumn()?:'UTC'; }catch(Exception $e){}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -480,6 +499,42 @@ $userInfo = $stmt->fetch(PDO::FETCH_ASSOC);
                         
                         <button type="submit" class="btn btn-primary mt-3">
                             <i class="bi bi-save me-2"></i>Update Password
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Change Timezone -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-clock me-2"></i>Change Timezone</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <?= SecurityHelper::csrfTokenField() ?>
+                        <input type="hidden" name="action" value="change_timezone">
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="new_timezone" class="form-label">New Timezone</label>
+                                <?php $mainTZ=[
+                                    'UTC','America/New_York','America/Chicago','America/Denver','America/Edmonton','America/Los_Angeles',
+                                    'Europe/London','Europe/Paris','Europe/Berlin','Europe/Moscow',
+                                    'Asia/Tokyo','Asia/Shanghai','Asia/Kolkata','Asia/Singapore',
+                                    'Australia/Sydney','Pacific/Auckland','Africa/Johannesburg'
+                                ]; ?>
+                                <select class="form-select" id="new_timezone" name="new_timezone" required>
+                                    <?php foreach($mainTZ as $timezone): ?>
+                                        <option value="<?= $timezone ?>" <?= $timezone===$currentTZ?'selected':'' ?>>
+                                            <?= $timezone ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary mt-3">
+                            <i class="bi bi-save me-2"></i>Update Timezone
                         </button>
                     </form>
                 </div>

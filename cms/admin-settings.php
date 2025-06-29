@@ -156,6 +156,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $success = 'Email address updated successfully!';
                 }
             }
+        } elseif ($action === 'change_timezone') {
+            $newTZ = SecurityHelper::sanitizeInput($_POST['new_timezone'] ?? ($_POST['timezone'] ?? ''), 'string');
+            // Update timezone
+            $stmt = $conn->prepare("UPDATE admin_users SET timezone = ? WHERE id = ?");
+            $stmt->execute([$newTZ, $userId]);
+            
+            SecurityHelper::logSecurityEvent('TIMEZONE_CHANGED', "User: $currentUsername, New Timezone: $newTZ");
+            $success = 'Timezone updated successfully!';
         }
     }
 }
@@ -506,6 +514,34 @@ $userInfo = $stmt->fetch(PDO::FETCH_ASSOC);
                     
                     <button type="submit" class="btn btn-primary mt-3">
                         <i class="bi bi-save me-2"></i>Update Email
+                    </button>
+                </form>
+            </div>
+
+            <!-- Timezone Setting -->
+            <div class="form-section">
+                <h5 class="mb-3"><i class="bi bi-clock me-2"></i>Change Timezone</h5>
+                <form method="POST">
+                    <?= SecurityHelper::csrfTokenField() ?>
+                    <input type="hidden" name="action" value="change_timezone">
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="new_timezone" class="form-label">New Timezone</label>
+                            <select class="form-select" id="new_timezone" name="new_timezone" required>
+                                <?php
+                                $mainTZ=['UTC','America/New_York','America/Chicago','America/Denver','America/Edmonton','America/Los_Angeles','Europe/London','Europe/Paris','Europe/Berlin','Europe/Moscow','Asia/Tokyo','Asia/Shanghai','Asia/Kolkata','Asia/Singapore','Australia/Sydney','Pacific/Auckland','Africa/Johannesburg'];
+                                foreach($mainTZ as $timezone){
+                                    $sel=($timezone==$userInfo['timezone'])?'selected':'';
+                                    echo "<option value=\"$timezone\" $sel>$timezone</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary mt-3">
+                        <i class="bi bi-save me-2"></i>Update Timezone
                     </button>
                 </form>
             </div>

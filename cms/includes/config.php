@@ -198,5 +198,21 @@ function getPageAnimationSettings($pageName) {
     }
 }
 
-// Initialize database on first load
-initializeDatabase(); 
+// Initialize database on first load and ensure site_settings table exists
+initializeDatabase();
+
+// Ensure global site_settings table exists (key/value store)
+try {
+    $connTZ = getDBConnection();
+    $connTZ->exec("CREATE TABLE IF NOT EXISTS site_settings (key TEXT PRIMARY KEY, value TEXT)");
+    // Fetch timezone setting
+    $stmtTZ = $connTZ->prepare("SELECT value FROM site_settings WHERE key = 'timezone'");
+    $stmtTZ->execute();
+    $tz = $stmtTZ->fetchColumn();
+    if (!$tz) {
+        $tz = 'UTC'; // default
+    }
+    date_default_timezone_set($tz);
+} catch (Exception $e) {
+    date_default_timezone_set('UTC');
+} 

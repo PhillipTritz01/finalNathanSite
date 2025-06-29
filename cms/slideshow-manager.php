@@ -289,6 +289,32 @@ $slideshowImages = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     </div>
                 <?php endif; ?>
                 
+                <!-- Interval Control -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-clock me-2"></i>Slideshow Interval</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3 align-items-center">
+                            <div class="col-auto">
+                                <label for="slideInterval" class="col-form-label">Seconds</label>
+                            </div>
+                            <div class="col-auto">
+                                <input type="number" id="slideInterval" class="form-control" min="2" step="1" style="max-width:120px;">
+                            </div>
+                            <div class="col-auto">
+                                <span class="form-text">Time each slide stays on screen.</span>
+                            </div>
+                        </div>
+                        <button type="button" id="saveIntervalBtn" class="btn btn-primary mt-3">
+                            <i class="bi bi-save me-1"></i>Save Interval
+                        </button>
+                        <div id="intervalSavedAlert" class="alert alert-success mt-2 d-none" role="alert">
+                            <i class="bi bi-check-circle me-1"></i>Interval saved!
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Add New Slide -->
                 <div class="card mb-4">
                     <div class="card-header">
@@ -432,6 +458,26 @@ $slideshowImages = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     }
                 });
             }
+
+            /* ---- Interval control ---- */
+            const intervalInput = document.getElementById('slideInterval');
+            const stored = localStorage.getItem('slideshowInterval');
+            intervalInput.value = stored ? Math.round(parseInt(stored,10)/1000) : 6;
+            intervalInput.addEventListener('change', () => {
+                // Optionally validate input live but do not save until button pressed
+                const v = Math.max(2, parseInt(intervalInput.value,10)||6);
+                intervalInput.value = v; // Clamp
+            });
+
+            /* Save interval explicitly on button click */
+            const saveIntervalBtn = document.getElementById('saveIntervalBtn');
+            const savedAlert = document.getElementById('intervalSavedAlert');
+            saveIntervalBtn.addEventListener('click', () => {
+                const v = Math.max(2, parseInt(intervalInput.value,10)||6);
+                localStorage.setItem('slideshowInterval', v*1000);
+                savedAlert.classList.remove('d-none');
+                setTimeout(()=>savedAlert.classList.add('d-none'),2000);
+            });
         });
 
         function submitAction(action, id, confirmMsg = null) {

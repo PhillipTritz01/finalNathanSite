@@ -128,7 +128,7 @@ if (count($slideshow_images) < 4) {
         <?= htmlspecialchars(getPageContent('home', 'hero_subtitle', 'Professional photography and cinematography services that bring your stories to life.')) ?>
       </p>
       <div class="flex gap-4 animate-slide-up-delay-3">
-        <a href="portfolio-clients.php"
+        <a id="viewPortfolioBtn" href="#portfolio"
            class="inline-block bg-white text-gray-900 px-8 py-4 rounded-full text-lg font-semibold hover:bg-gray-100 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl transform-gpu">
           <?= htmlspecialchars(getPageContent('home', 'portfolio_button_text', 'View Portfolio')) ?>
         </a>
@@ -247,7 +247,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Start slideshow after initial animations
     setTimeout(() => {
-        setInterval(nextSlide, 6000); // Slower transition for better Ken Burns effect
+        const storedInt = localStorage.getItem('slideshowInterval');
+        const delay = storedInt ? parseInt(storedInt,10) : 6000;
+        setInterval(nextSlide, Math.max(2000, delay));
     }, 3000);
     
     // Parallax effect for hero section
@@ -319,6 +321,15 @@ document.addEventListener('DOMContentLoaded', function() {
             img.src = slide.src;
         }
     });
+
+    /* Dynamically set View Portfolio button to first dropdown item */
+    const portfolioBtn = document.getElementById('viewPortfolioBtn');
+    if (portfolioBtn) {
+        const firstLink = document.querySelector('.desktop-menu .dropdown .dropdown-content a');
+        if (firstLink && firstLink.href) {
+            portfolioBtn.href = firstLink.href;
+        }
+    }
 });
 </script>
 

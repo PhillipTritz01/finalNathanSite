@@ -238,9 +238,8 @@ document.addEventListener('DOMContentLoaded', function () {
   const galleryAnim = localStorage.getItem('galleryAnimation') || 'rotate';
   gallery.classList.add('animation-' + galleryAnim);
   
-  // Add refresh animation class from CMS settings
+  // Get refresh animation but add it later when gallery becomes visible
   const refreshAnim = localStorage.getItem('refreshAnimation') || 'fade';
-  gallery.classList.add('refresh-' + refreshAnim);
   
   const macy = Macy({
     container: '.gallery-masonry',
@@ -260,8 +259,8 @@ document.addEventListener('DOMContentLoaded', function () {
   
   function showGallery() {
     gallery.classList.remove('gallery-hidden');
-    // Gallery is already set up with refresh animation class
-    // The CSS animation will trigger automatically
+    // Now apply the refresh animation class so the animation starts
+    gallery.classList.add('refresh-' + refreshAnim);
   }
   
   images.forEach(img => {

@@ -230,10 +230,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const galleryAnim = localStorage.getItem('galleryAnimation') || 'rotate';
   gallery.classList.add('animation-' + galleryAnim);
   
-  // Add refresh animation class from CMS settings
+  // Get refresh animation but defer adding until reveal
   const refreshAnim = localStorage.getItem('refreshAnimation') || 'fade';
-  gallery.classList.add('refresh-' + refreshAnim);
-
+  
   const style = document.createElement('style');
   style.innerHTML = `@media (min-width: 601px) { .gallery-masonry { column-count: initial !important; } }`;
   document.head.appendChild(style);
@@ -254,8 +253,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let loaded = 0;
   function showGallery() {
     gallery.classList.remove('gallery-hidden');
-    // Gallery is already set up with refresh animation class
-    // The CSS animation will trigger automatically
+    // Apply refresh animation class now so animation is visible
+    gallery.classList.add('refresh-' + refreshAnim);
   }
   const images = gallery.querySelectorAll('img');
   images.forEach(img => {
