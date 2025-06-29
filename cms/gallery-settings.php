@@ -210,8 +210,8 @@ body.dark-mode .gallery-settings-info, html.dark-mode .gallery-settings-info {
     <a class="nav-link text-white" href="admin.php">Manage Portfolio</a>
     <a class="nav-link text-white" href="portfolio-overview.php">Portfolio Overview</a>
     <span class="nav-link text-white fw-bold">Gallery Settings</span>
-                        <span class="nav-link text-white fw-bold mt-3">Page Management</span>
-                    <a class="nav-link text-white" href="page-manager.php">Page Content</a>
+    <span class="nav-link text-white fw-bold mt-3">Page Management</span>
+    <a class="nav-link text-white" href="page-manager.php">Page Content</a>
                     <a class="nav-link text-white" href="slideshow-manager.php">Hero Slideshow</a>
     <span class="nav-link text-white fw-bold mt-3">System</span>
     <a class="nav-link text-white" href="security-status.php">Security Status</a>

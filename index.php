@@ -50,34 +50,34 @@ while ($row = $stmt->fetch()) {
 // Fallback: if no slideshow images, use portfolio images as before
 if (empty($slideshow_images)) {
     define('PORTFOLIO_CATEGORIES', ['fineart','portraits','clients','travel']);
-    
-    /* first image of each category */
-    foreach (PORTFOLIO_CATEGORIES as $cat) {
-        $stmt = $conn->prepare("
-            SELECT m.media_url
-              FROM portfolio_items p
-              JOIN portfolio_media m ON p.id = m.portfolio_item_id
-             WHERE p.category = ? AND m.media_type = 'image'
-          ORDER BY m.display_order, m.id
-             LIMIT 1
-        ");
-        $stmt->execute([$cat]);
-        if ($img = $stmt->fetchColumn()) {
-            $slideshow_images[] = 'cms/' . htmlspecialchars($img);
-        }
+
+/* first image of each category */
+foreach (PORTFOLIO_CATEGORIES as $cat) {
+    $stmt = $conn->prepare("
+        SELECT m.media_url
+          FROM portfolio_items p
+          JOIN portfolio_media m ON p.id = m.portfolio_item_id
+         WHERE p.category = ? AND m.media_type = 'image'
+      ORDER BY m.display_order, m.id
+         LIMIT 1
+    ");
+    $stmt->execute([$cat]);
+    if ($img = $stmt->fetchColumn()) {
+        $slideshow_images[] = 'cms/' . htmlspecialchars($img);
     }
+}
     
-    /* pad with random images until we have 4 */
-    if (count($slideshow_images) < 4) {
-        $stmt = $conn->query("
-            SELECT m.media_url
-              FROM portfolio_media m
-             WHERE m.media_type = 'image'
-          ORDER BY RANDOM()
-             LIMIT ".(4-count($slideshow_images))
-        );
-        while ($img = $stmt->fetchColumn()) {
-            $slideshow_images[] = 'cms/' . htmlspecialchars($img);
+/* pad with random images until we have 4 */
+if (count($slideshow_images) < 4) {
+    $stmt = $conn->query("
+        SELECT m.media_url
+          FROM portfolio_media m
+         WHERE m.media_type = 'image'
+      ORDER BY RANDOM()
+         LIMIT ".(4-count($slideshow_images))
+    );
+    while ($img = $stmt->fetchColumn()) {
+        $slideshow_images[] = 'cms/' . htmlspecialchars($img);
         }
     }
 }
@@ -92,7 +92,7 @@ if (empty($slideshow_images)) {
 </style>
 
 <!-- ─────────────── HERO SECTION ─────────────── -->
-<section class="relative h-screen overflow-hidden">
+<section class="relative h-screen" style="position: relative; overflow: hidden;">
 
   <!-- slideshow -->
   <div id="hero-slideshow" class="absolute inset-0 w-full h-full z-0">
@@ -101,7 +101,7 @@ if (empty($slideshow_images)) {
            class="slideshow-img absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 <?= $i? 'opacity-0':''; ?> scale-110 animate-ken-burns"
            style="object-position:center" alt="Slide <?= $i+1; ?>">
     <?php endforeach; ?>
-    <div class="absolute inset-0 bg-black/60 animate-fade-in"></div>
+    <div class="absolute inset-0 bg-black/60 animate-fade-in" style="position: absolute !important; inset: 0 !important;"></div>
   </div>
 
   <!-- corner accents -->
@@ -251,14 +251,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 3000);
     
     // Parallax effect for hero section
-    window.addEventListener('scroll', function() {
-        const scrolled = window.pageYOffset;
-        const heroSection = document.querySelector('#hero-slideshow');
-        if (heroSection && scrolled < window.innerHeight) {
-            const rate = scrolled * -0.3;
-            heroSection.style.transform = `translateY(${rate}px)`;
-        }
-    });
+    /* Disabled parallax that moved the entire slideshow and caused the overlay
+       to detach and leave a white gap on scroll. Reactivate if needed by
+       switching transform to individual slides instead of the container. */
+    // window.addEventListener('scroll', function() {
+    //     const scrolled = window.pageYOffset;
+    //     const heroSection = document.querySelector('#hero-slideshow');
+    //     if (heroSection && scrolled < window.innerHeight) {
+    //         const rate = scrolled * -0.3;
+    //         heroSection.style.transform = `translateY(${rate}px)`;
+    //     }
+    // });
     
     // Enhanced button hover effects
     const buttons = document.querySelectorAll('.animate-slide-up-delay-3 a');

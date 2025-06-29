@@ -367,22 +367,12 @@ $slideshowImages = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                             <small class="text-muted">Added: <?= date('M j, Y', strtotime($slide['created_at'])) ?></small>
                                                         </div>
                                                         <div class="d-flex gap-2">
-                                                            <form method="POST" class="d-inline">
-                                                                <?= SecurityHelper::csrfTokenField() ?>
-                                                                <input type="hidden" name="action" value="toggle_active">
-                                                                <input type="hidden" name="id" value="<?= $slide['id'] ?>">
-                                                                <button type="submit" class="btn btn-sm <?= $slide['is_active'] ? 'btn-success' : 'btn-secondary' ?>">
-                                                                    <?= $slide['is_active'] ? 'Active' : 'Inactive' ?>
-                                                                </button>
-                                                            </form>
-                                                            <form method="POST" class="d-inline" onsubmit="return confirm('Delete this slide?')">
-                                                                <?= SecurityHelper::csrfTokenField() ?>
-                                                                <input type="hidden" name="action" value="delete_slide">
-                                                                <input type="hidden" name="id" value="<?= $slide['id'] ?>">
-                                                                <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                                    <i class="bi bi-trash"></i>
-                                                                </button>
-                                                            </form>
+                                                            <button type="button" onclick="toggleActive(<?= $slide['id'] ?>)" class="btn btn-sm <?= $slide['is_active'] ? 'btn-success' : 'btn-secondary' ?>">
+                                                                <?= $slide['is_active'] ? 'Active' : 'Inactive' ?>
+                                                            </button>
+                                                            <button type="button" onclick="deleteSlide(<?= $slide['id'] ?>)" class="btn btn-sm btn-outline-danger">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -443,6 +433,54 @@ $slideshowImages = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 });
             }
         });
+
+        function submitAction(action, id, confirmMsg = null) {
+            if (confirmMsg && !confirm(confirmMsg)) {
+                return;
+            }
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.style.display = 'none';
+
+            const orderForm = document.getElementById('orderForm');
+            if (!orderForm) {
+                console.error('Could not find order form to get CSRF token');
+                return;
+            }
+            const csrfInput = orderForm.querySelector('input[name="csrf_token"]');
+            if (csrfInput) {
+                form.appendChild(csrfInput.cloneNode());
+            } else {
+                console.error('Could not find CSRF token');
+                return;
+            }
+            
+            const actionInput = document.createElement('input');
+            actionInput.type = 'hidden';
+            actionInput.name = 'action';
+            actionInput.value = action;
+            form.appendChild(actionInput);
+
+            if (id) {
+                const idInput = document.createElement('input');
+                idInput.type = 'hidden';
+                idInput.name = 'id';
+                idInput.value = id;
+                form.appendChild(idInput);
+            }
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        function deleteSlide(id) {
+            submitAction('delete_slide', id, 'Delete this slide?');
+        }
+
+        function toggleActive(id) {
+            submitAction('toggle_active', id);
+        }
     </script>
 </body>
 </html> 
