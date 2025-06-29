@@ -3,7 +3,12 @@ require_once '../includes/config.php';
 require_once '../includes/upload_config.php';
 
 header('Content-Type: application/json');
+
+// Security headers for API
+SecurityHelper::setSecurityHeaders();
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+  SecurityHelper::logSecurityEvent('INVALID_API_METHOD', 'Non-POST request to delete_media API');
   http_response_code(405); echo json_encode(['success'=>false]); exit;
 }
 

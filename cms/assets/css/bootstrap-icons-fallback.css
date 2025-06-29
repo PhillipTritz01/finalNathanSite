@@ -1,0 +1,55 @@
+/* Bootstrap Icons Fallback - Minimal Essential Icons */
+.bi {
+  font-family: monospace !important;
+  font-style: normal !important;
+  font-weight: normal !important;
+  line-height: 1 !important;
+  display: inline-block !important;
+}
+
+/* Essential CMS Icons - Text fallbacks */
+.bi-arrow-clockwise::before { content: "↻"; }
+.bi-x-lg::before { content: "×"; }
+.bi-trash::before { content: "🗑"; }
+.bi-chevron-up::before { content: "↑"; }
+.bi-chevron-left::before { content: "←"; }
+.bi-chevron-right::before { content: "→"; }
+.bi-images::before { content: "🖼"; }
+.bi-exclamation-triangle::before { content: "⚠"; }
+.bi-check::before { content: "✓"; }
+.bi-upload::before { content: "↑"; }
+.bi-download::before { content: "↓"; }
+.bi-settings::before { content: "⚙"; }
+.bi-gear::before { content: "⚙"; }
+.bi-eye::before { content: "👁"; }
+.bi-pencil::before { content: "✏"; }
+.bi-plus::before { content: "+"; }
+.bi-minus::before { content: "-"; }
+.bi-search::before { content: "🔍"; }
+.bi-home::before { content: "🏠"; }
+.bi-folder::before { content: "📁"; }
+.bi-file::before { content: "📄"; }
+.bi-heart::before { content: "♥"; }
+.bi-star::before { content: "★"; }
+.bi-lock::before { content: "🔒"; }
+.bi-unlock::before { content: "🔓"; }
+.bi-shield::before { content: "🛡"; }
+.bi-user::before { content: "👤"; }
+.bi-users::before { content: "👥"; }
+.bi-mail::before { content: "✉"; }
+.bi-phone::before { content: "📞"; }
+.bi-camera::before { content: "📷"; }
+.bi-calendar::before { content: "📅"; }
+.bi-clock::before { content: "🕐"; }
+.bi-refresh::before { content: "↻"; }
+.bi-save::before { content: "💾"; }
+.bi-edit::before { content: "✏"; }
+.bi-delete::before { content: "🗑"; }
+.bi-info::before { content: "ℹ"; }
+.bi-warning::before { content: "⚠"; }
+.bi-error::before { content: "❌"; }
+.bi-success::before { content: "✅"; }
+.bi-menu::before { content: "☰"; }
+.bi-list::before { content: "☰"; }
+.bi-grid::before { content: "▦"; }
+.bi-table::before { content: "▦"; } 

@@ -13,7 +13,7 @@
                 <div>
                     <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
                     <ul class="space-y-2">
-                        <li><a href="portfolio.php" class="text-gray-400 hover:text-white transition">Portfolio</a></li>
+                        <li><span class="text-gray-400">Portfolio</span></li>
                         <li><a href="about.php" class="text-gray-400 hover:text-white transition">About</a></li>
                         <li><a href="contact.php" class="text-gray-400 hover:text-white transition">Contact</a></li>
                     </ul>

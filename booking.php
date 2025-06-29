@@ -27,7 +27,7 @@
                                 <li><a href="services/commercial.php" class="block px-4 py-2 text-gray-800 hover:bg-blue-50">Commercial Projects</a></li>
                             </ul>
                         </li>
-                        <li><a href="portfolio.php" class="text-gray-800 hover:text-blue-600 transition">Portfolio</a></li>
+                        <li><span class="text-gray-800">Portfolio</span></li>
                         <li><a href="about.php" class="text-gray-800 hover:text-blue-600 transition">About</a></li>
                         <li><a href="contact.php" class="text-gray-800 hover:text-blue-600 transition">Contact</a></li>
                         <li><a href="booking.php" class="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition">Book a Session</a></li>
@@ -131,7 +131,7 @@
                         <h3 class="text-lg font-semibold mb-4">Company</h3>
                         <ul class="space-y-2">
                             <li><a href="about.php" class="text-gray-400 hover:text-white transition">About Us</a></li>
-                            <li><a href="portfolio.php" class="text-gray-400 hover:text-white transition">Portfolio</a></li>
+                            <li><span class="text-gray-400">Portfolio</span></li>
                             <li><a href="services.php" class="text-gray-400 hover:text-white transition">Services</a></li>
                             <li><a href="contact.php" class="text-gray-400 hover:text-white transition">Contact</a></li>
                         </ul>

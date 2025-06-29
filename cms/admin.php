@@ -1,16 +1,41 @@
 <?php
 require_once 'includes/config.php';
 require_once 'includes/upload_config.php';
+require_once 'includes/image_optimizer.php';
 
-/* ─────── Session / auth ─────── */
+/* ─────── Enhanced Session Security ─────── */
 if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+  SecurityHelper::logSecurityEvent('UNAUTHORIZED_ACCESS', 'Access to admin without login');
   header('Location: login.php'); exit;
 }
+
+// Check session timeout
 if (isset($_SESSION['last_activity']) && time() - $_SESSION['last_activity'] > 1800) {
+  SecurityHelper::logSecurityEvent('SESSION_TIMEOUT', 'Session expired');
   session_unset(); session_destroy(); header('Location: login.php'); exit;
 }
+
+// Validate session integrity (prevent session hijacking)
+$currentIP = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+$currentUA = $_SERVER['HTTP_USER_AGENT'] ?? '';
+
+if (isset($_SESSION['ip_address']) && $_SESSION['ip_address'] !== $currentIP) {
+  SecurityHelper::logSecurityEvent('SESSION_HIJACK_ATTEMPT', "Original IP: {$_SESSION['ip_address']}, Current IP: $currentIP");
+  session_unset(); session_destroy(); header('Location: login.php'); exit;
+}
+
+if (isset($_SESSION['user_agent']) && $_SESSION['user_agent'] !== $currentUA) {
+  SecurityHelper::logSecurityEvent('SESSION_HIJACK_ATTEMPT', "User agent mismatch");
+  session_unset(); session_destroy(); header('Location: login.php'); exit;
+}
+
 $_SESSION['last_activity'] = time();
-if (isset($_GET['logout'])) { session_unset(); session_destroy(); header('Location: login.php'); exit; }
+
+// Secure logout
+if (isset($_GET['logout'])) { 
+  SecurityHelper::logSecurityEvent('LOGOUT', 'Admin logout');
+  session_unset(); session_destroy(); header('Location: login.php'); exit; 
+}
 
 /* ─────── Merge raw-JSON into $_POST if frontend used fetch JSON ─────── */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$_POST) {
@@ -24,13 +49,26 @@ $conn = getDBConnection();
 /* ─────── Add-new / Delete-all ─────── */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
+  // Validate CSRF token for all POST requests
+  $csrfToken = $_POST['csrf_token'] ?? '';
+  if (!SecurityHelper::validateCSRF($csrfToken)) {
+    SecurityHelper::logSecurityEvent('CSRF_VIOLATION', "Action: {$_POST['action']}");
+    die('Security validation failed. Please refresh and try again.');
+  }
+
   switch ($_POST['action']) {
 
   /* add a new portfolio item + its media */
   case 'add_portfolio':
-    $title       = htmlspecialchars(trim($_POST['title'] ?? ''), ENT_QUOTES);
-    $description = htmlspecialchars(trim($_POST['description'] ?? ''), ENT_QUOTES);
-    $category    = htmlspecialchars(trim($_POST['category'] ?? 'clients'), ENT_QUOTES);
+    $title       = SecurityHelper::sanitizeInput($_POST['title'] ?? '', 'string');
+    $description = SecurityHelper::sanitizeInput($_POST['description'] ?? '', 'string');
+    $category    = SecurityHelper::sanitizeInput($_POST['category'] ?? 'clients', 'string');
+
+    // Validate required fields
+    if (empty($title) || empty($description)) {
+      SecurityHelper::logSecurityEvent('INVALID_INPUT', 'Empty title or description in portfolio add');
+      break;
+    }
 
     try {
       $conn->beginTransaction();
@@ -39,21 +77,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       $itemId = $conn->lastInsertId();
 
       if (!empty($_FILES['media']['name'][0])) {
-        $allowed = array_merge(ALLOWED_IMAGE_TYPES, ALLOWED_VIDEO_TYPES, ALLOWED_AUDIO_TYPES);
+        SecurityHelper::logSecurityEvent('FILE_UPLOAD', "Portfolio ID: $itemId, Files: " . count($_FILES['media']['name']));
 
         foreach ($_FILES['media']['name'] as $i => $name) {
           if ($_FILES['media']['error'][$i]) continue;
-          $type = $_FILES['media']['type'][$i];
-          if (!in_array($type,$allowed)) continue;
 
-          $mediaType = str_starts_with($type,'image/') ? 'image'
-                    : (str_starts_with($type,'video/') ? 'video' : 'audio');
-          $ext  = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-          $new  = uniqid().'.'.$ext;
-          $file = UPLOAD_DIR.$new;
-          $url  = UPLOAD_URL.$new;
+          // Secure file validation
+          $fileData = [
+            'name' => $_FILES['media']['name'][$i],
+            'type' => $_FILES['media']['type'][$i],
+            'tmp_name' => $_FILES['media']['tmp_name'][$i],
+            'error' => $_FILES['media']['error'][$i],
+            'size' => $_FILES['media']['size'][$i]
+          ];
 
-          if (!move_uploaded_file($_FILES['media']['tmp_name'][$i], $file)) continue;
+          $validationErrors = SecurityHelper::validateUploadedFile($fileData);
+          if (!empty($validationErrors)) {
+            SecurityHelper::logSecurityEvent('FILE_UPLOAD_REJECTED', implode(', ', $validationErrors));
+            continue; // Skip invalid files
+          }
+
+          $mediaType = 'image'; // Only images allowed now for security
+          $secureFilename = SecurityHelper::generateSecureFilename($name);
+          $file = UPLOAD_DIR . $secureFilename;
+          $url  = UPLOAD_URL . $secureFilename;
+
+          if (!move_uploaded_file($_FILES['media']['tmp_name'][$i], $file)) {
+            SecurityHelper::logSecurityEvent('FILE_UPLOAD_FAILED', "Failed to move file: $name");
+            continue;
+          }
+
+          // Set secure file permissions
+          chmod($file, 0644);
+
+          // Optimize image after upload (for images only)
+          if ($mediaType === 'image' && class_exists('ImageOptimizer')) {
+            try {
+              ImageOptimizer::optimizeImage($file, 85, 1920, 1080);
+              ImageOptimizer::generateThumbnail($file, 300, 300, 80);
+            } catch (Exception $e) {
+              error_log('Image optimization failed: ' . $e->getMessage());
+              // Continue without optimization
+            }
+          }
 
           $conn->prepare("INSERT INTO portfolio_media
                           (portfolio_item_id,media_url,media_type,display_order)
@@ -62,32 +128,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
       }
       $conn->commit();
-    } catch(Throwable $e){ $conn->rollBack(); }
+      SecurityHelper::logSecurityEvent('PORTFOLIO_ADDED', "ID: $itemId, Title: $title");
+    } catch(Throwable $e){ 
+      $conn->rollBack(); 
+      SecurityHelper::logSecurityEvent('DATABASE_ERROR', $e->getMessage());
+    }
     break;
 
   /* delete ALL media inside one portfolio item */
   case 'delete_portfolio':
-    $id = (int)($_POST['id'] ?? 0);
-    if ($id) {
+    $id = SecurityHelper::sanitizeInput($_POST['id'] ?? 0, 'int');
+    if ($id && $id > 0) {
       try {
         $conn->beginTransaction();
+        
+        // First get portfolio info for logging
+        $stmt = $conn->prepare("SELECT title FROM portfolio_items WHERE id = ?");
+        $stmt->execute([$id]);
+        $portfolioInfo = $stmt->fetch();
+        
+        // Get media files to delete
         $stmt=$conn->prepare("SELECT media_url FROM portfolio_media WHERE portfolio_item_id=?");
         $stmt->execute([$id]);
-        foreach($stmt->fetchAll(PDO::FETCH_COLUMN) as $u){
-          $p = realpath(__DIR__.'/../'.$u);
-          if ($p && str_starts_with($p, UPLOAD_DIR) && is_file($p)) @unlink($p);
+        $mediaFiles = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        
+        // Secure file deletion with path validation
+        foreach($mediaFiles as $u){
+          $fullPath = realpath(__DIR__.'/../'.$u);
+          if ($fullPath && SecurityHelper::validatePath($fullPath, UPLOAD_DIR) && is_file($fullPath)) {
+            @unlink($fullPath);
+            // Also delete thumbnails and WebP versions
+            $thumbPath = dirname($fullPath) . '/thumb_' . basename($fullPath);
+            $webpPath = pathinfo($fullPath, PATHINFO_DIRNAME) . '/' . pathinfo($fullPath, PATHINFO_FILENAME) . '.webp';
+            @unlink($thumbPath);
+            @unlink($webpPath);
+          }
         }
+        
         $conn->prepare("DELETE FROM portfolio_items WHERE id=?")->execute([$id]);
         $conn->commit();
+        
+        SecurityHelper::logSecurityEvent('PORTFOLIO_DELETED', "ID: $id, Title: " . ($portfolioInfo['title'] ?? 'Unknown'));
+        
         if (strtolower($_SERVER['HTTP_X_REQUESTED_WITH']??'')==='xmlhttprequest'){
           echo json_encode(['success'=>true]); exit;
         }
       }catch(Throwable $e){
         if($conn->inTransaction()) $conn->rollBack();
+        SecurityHelper::logSecurityEvent('DELETE_ERROR', "Portfolio ID: $id, Error: " . $e->getMessage());
         if (strtolower($_SERVER['HTTP_X_REQUESTED_WITH']??'')==='xmlhttprequest'){
           http_response_code(500); echo json_encode(['success'=>false]); exit;
         }
       }
+    } else {
+      SecurityHelper::logSecurityEvent('INVALID_DELETE_ID', "Invalid portfolio ID: $id");
     }
     break;
   }
@@ -101,13 +195,57 @@ $items = $conn->query("SELECT * FROM portfolio_items ORDER BY created_at DESC")
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>CMS Admin</title>
 
+<!-- Apply theme immediately to prevent flash -->
+<script>
+(function() {
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+        document.documentElement.classList.add(saved + '-mode');
+    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.classList.add('dark-mode');
+    } else {
+        document.documentElement.classList.add('light-mode');
+    }
+})();
+</script>
+
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+
+<!-- Bootstrap Icons - Consolidated Loading -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+<!-- Fallback for Bootstrap Icons -->
+<script>
+// Simplified icon font detection and fallback
+(function() {
+    const link = document.querySelector('link[href*="bootstrap-icons"]');
+    if (link) {
+        link.onerror = function() {
+            console.log('Primary Bootstrap Icons CDN failed, loading fallback...');
+            const fallback = document.createElement('link');
+            fallback.rel = 'stylesheet';
+            fallback.href = 'https://unpkg.com/bootstrap-icons@1.11.3/font/bootstrap-icons.css';
+            fallback.onerror = function() {
+                console.log('Fallback Bootstrap Icons CDN also failed');
+                // Load local fallback if available
+                const localFallback = document.createElement('link');
+                localFallback.rel = 'stylesheet';
+                localFallback.href = 'assets/css/bootstrap-icons-fallback.css';
+                document.head.appendChild(localFallback);
+            };
+            document.head.appendChild(fallback);
+        };
+    }
+})();
+</script>
 
 <!-- PhotoSwipe -->
 <link  rel="stylesheet" href="../public/assets/css/photoswipe.css">
 <script src="../public/assets/js/photoswipe.umd.min.js"></script>
 <script src="../public/assets/js/photoswipe-lightbox.umd.min.js"></script>
+
+<!-- Performance Optimizer -->
+<script src="assets/js/performance-optimizer.js"></script>
 
 <style>
 :root {
@@ -126,7 +264,7 @@ $items = $conn->query("SELECT * FROM portfolio_items ORDER BY created_at DESC")
   --input-bg: #fff;
   --input-text: #222;
 }
-body.dark-mode {
+body.dark-mode, html.dark-mode {
   --bg: #181a1b;
   --text: #e0e0e0;
   --sidebar-bg: #23272b;
@@ -213,7 +351,7 @@ input:focus, textarea:focus, select:focus {
   display: flex;
   align-items: center;
 }
-body.dark-mode .theme-switch {
+body.dark-mode .theme-switch, html.dark-mode .theme-switch {
   background: #444;
 }
 .theme-switch-knob {
@@ -227,7 +365,7 @@ body.dark-mode .theme-switch {
   box-shadow: 0 1px 4px rgba(0,0,0,0.12);
   transition: left 0.3s cubic-bezier(.4,0,.2,1), background 0.3s;
 }
-body.dark-mode .theme-switch-knob {
+body.dark-mode .theme-switch-knob, html.dark-mode .theme-switch-knob {
   left: 31px;
   background: #e0e0e0;
 }
@@ -243,7 +381,7 @@ body.dark-mode .theme-switch-knob {
   left: 6px;
   opacity: 0.5;
 }
-body.dark-mode .theme-switch-knob::before {
+body.dark-mode .theme-switch-knob::before, html.dark-mode .theme-switch-knob::before {
   background: #222;
   opacity: 0.5;
 }
@@ -256,6 +394,9 @@ body.dark-mode .theme-switch-knob::before {
 .portfolio-item{margin-bottom:25px;padding:15px;border:1px solid #dee2e6;border-radius:6px}
 .media-preview-container{display:grid;gap:.5rem;grid-template-columns:repeat(4,1fr)}
 .media-preview{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:6px;background:#eee;cursor:pointer}
+.thumbnail-link{display:block;width:100%;height:100%}
+.thumbnail-link img{transition:transform .2s ease}
+.thumbnail-link:hover img{transform:scale(1.05)}
 .delete-check{position:absolute;top:6px;right:6px;width:18px;height:18px;z-index:2}
 .delete-selected,.delete-all{width:auto;align-self:start}
 .delete-selected[disabled]{opacity:.5;pointer-events:none}
@@ -572,6 +713,16 @@ body, .content, .sidebar, .card, .portfolio-item, input, textarea, select, .btn,
     font-size: 16px;
   }
 }
+
+/* Bootstrap Icons - Simplified */
+.bi {
+    font-family: "bootstrap-icons" !important;
+    font-style: normal !important;
+    font-weight: normal !important;
+    line-height: 1 !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+}
 </style>
 </head><body>
 <div class="theme-switch-wrap">
@@ -585,8 +736,18 @@ body, .content, .sidebar, .card, .portfolio-item, input, textarea, select, .btn,
 <aside class="col-md-3 col-lg-2 sidebar p-3">
   <h3 class="mb-4">CMS</h3>
   <nav class="nav flex-column">
-    <span class="nav-link text-white fw-bold">Portfolio</span>
+    <span class="nav-link text-white fw-bold">Portfolio Management</span>
+    <span class="nav-link text-white fw-bold">Manage Portfolio</span>
+    <a class="nav-link text-white" href="portfolio-overview.php">Portfolio Overview</a>
     <a class="nav-link text-white" href="gallery-settings.php">Gallery Settings</a>
+    <span class="nav-link text-white fw-bold mt-3">Page Management</span>
+    <a class="nav-link text-white" href="page-manager.php">Page Content</a>
+    <a class="nav-link text-white" href="slideshow-manager.php">Hero Slideshow</a>
+    <span class="nav-link text-white fw-bold mt-3">System</span>
+    <a class="nav-link text-white" href="security-status.php">Security Status</a>
+    <a class="nav-link text-white" href="settings.php">Admin Settings</a>
+    <a class="nav-link text-white" href="performance-monitor.php">Performance Monitor</a>
+    <a class="nav-link text-white" href="maintenance.php">Maintenance</a>
     <a class="nav-link text-white" href="?logout=1">Logout</a>
   </nav>
 </aside>
@@ -599,6 +760,7 @@ body, .content, .sidebar, .card, .portfolio-item, input, textarea, select, .btn,
     <h5 class="card-title">Add New Portfolio Item</h5>
     <form id="addPortfolioForm" method="POST" enctype="multipart/form-data">
       <input type="hidden" name="action" value="add_portfolio">
+      <?php echo SecurityHelper::csrfTokenField(); ?>
       <div class="mb-2"><label class="form-label">Title</label><input class="form-control" name="title" required></div>
       <div class="mb-2"><label class="form-label">Description</label><textarea class="form-control" name="description" rows="3" required></textarea></div>
       <div class="mb-2"><label class="form-label">Category</label>
@@ -624,10 +786,19 @@ body, .content, .sidebar, .card, .portfolio-item, input, textarea, select, .btn,
     <div class="d-flex flex-wrap align-items-start gap-4">
       <div class="d-flex flex-column gap-2">
         <!-- thumbs -->
-        <div class="media-preview-container">
-        <?php foreach($thumbs as $m): ?>
+        <div class="media-preview-container pswp-gallery" id="gallery-<?=$it['id']?>">
+        <?php foreach($thumbs as $m): 
+          // Get image dimensions for PhotoSwipe
+          $imgPath = 'uploads/' . $m['media_url'];
+          [$w, $h] = @getimagesize($imgPath) ?: [1600, 1200];
+        ?>
           <div class="media-wrapper position-relative">
-            <img src="<?=htmlspecialchars($m['media_url'])?>" class="media-preview">
+            <a href="<?=htmlspecialchars($m['media_url'])?>" 
+               data-pswp-width="<?=$w?>" 
+               data-pswp-height="<?=$h?>"
+               class="thumbnail-link">
+              <img src="<?=htmlspecialchars($m['media_url'])?>" class="media-preview">
+            </a>
             <input type="checkbox" class="form-check-input delete-check" data-media-id="<?=$m['id']?>">
           </div>
         <?php endforeach; ?>
@@ -762,6 +933,8 @@ const postJSON=(url,obj)=>fetch(url,{
 
 /* -------------------------------------------------------------- */
 document.addEventListener('DOMContentLoaded',()=>{
+
+/* Bootstrap Icons loaded via onerror fallback above */
 
 /* auto-submit extra-media */
 document.querySelectorAll('.add-media-input').forEach(inp=>{
@@ -1067,12 +1240,14 @@ function updateDashboard(deletedIds) {
 
 // Theme toggle logic
 function setTheme(mode) {
+  document.documentElement.classList.remove('light-mode', 'dark-mode');
   document.body.classList.remove('light-mode', 'dark-mode');
+  document.documentElement.classList.add(mode+'-mode');
   document.body.classList.add(mode+'-mode');
   localStorage.setItem('theme', mode);
 }
 function toggleTheme() {
-  const isDark = document.body.classList.contains('dark-mode');
+  const isDark = document.body.classList.contains('dark-mode') || document.documentElement.classList.contains('dark-mode');
   setTheme(isDark ? 'light' : 'dark');
 }
 document.getElementById('themeToggle').onclick = toggleTheme;
@@ -1106,6 +1281,21 @@ document.getElementById('addPortfolioForm').addEventListener('submit', function(
     toast('Error', 'Failed to add portfolio item', false);
   });
 });
+
+/* Initialize PhotoSwipe for thumbnail galleries */
+document.querySelectorAll('.media-preview-container.pswp-gallery').forEach(gallery => {
+  const lightbox = new PhotoSwipeLightbox({
+    gallery: '#' + gallery.id,
+    children: 'a.thumbnail-link',
+    pswpModule: PhotoSwipe,
+    wheelToZoom: true,
+    arrowKeys: true,
+    padding: { top: 40, bottom: 40, left: 40, right: 40 },
+    bgOpacity: 1
+  });
+  lightbox.init();
+});
+
 });
 </script>
 </body></html>

@@ -9,6 +9,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title><?= $page_title ?? 'Professional Photography'; ?></title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHJ4PSI0IiBmaWxsPSIjNjM2NmYxIi8+PHBhdGggZD0iTTggMTBIMjRWMjJIOFYxMFoiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIyIiBmaWxsPSJub25lIi8+PGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iNCIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9Im5vbmUiLz48Y2lyY2xlIGN4PSIyMCIgY3k9IjEyIiByPSIxIiBmaWxsPSIjZmZmIi8+PC9zdmc+">
 
   <!-- Tailwind + Icons -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -131,9 +134,9 @@ $mainPad = ($sticky_nav && !$transparent_nav) ? 'pt-16' : '';
       <ul class="desktop-menu flex items-center justify-center gap-4">
         <li><a href="index.php" class="<?= $deskLink; ?> mr-[50px]">Home</a></li>
         <li class="dropdown mr-[50px]">
-          <a href="#" tabindex="-1" class="<?= $deskLink; ?> cursor-default select-none">
+          <button type="button" class="<?= $deskLink; ?> bg-transparent border-0 cursor-pointer">
             Portfolio <i class="fas fa-chevron-down ml-1 text-base chev"></i>
-          </a>
+          </button>
           <ul class="dropdown-content">
             <li><a href="portfolio-fineart.php">Fine Art</a></li>
             <li><a href="portfolio-portraits.php">Portraits</a></li>
@@ -166,10 +169,14 @@ $mainPad = ($sticky_nav && !$transparent_nav) ? 'pt-16' : '';
     <li><a href="index.php" class="block text-2xl text-black hover:text-gray-700">Home</a></li>
 
     <li class="mobile-dropdown relative">
-      <a href="#" tabindex="-1"
-         class="block text-2xl text-black hover:text-gray-700 mobile-dropdown-toggle cursor-default select-none">
-        Portfolio <i class="fas fa-chevron-down ml-2 text-base chev"></i>
-      </a>
+      <div class="flex items-center justify-between">
+        <span class="block text-2xl text-black">
+          Portfolio
+        </span>
+        <button class="mobile-dropdown-toggle p-2 text-black hover:text-gray-700">
+          <i class="fas fa-chevron-down text-base chev"></i>
+        </button>
+      </div>
       <ul class="mobile-dropdown-content pl-4 mt-2 space-y-2">
         <li><a href="portfolio-fineart.php"   class="block text-xl text-gray-600 hover:text-gray-700">Fine Art</a></li>
         <li><a href="portfolio-portraits.php" class="block text-xl text-gray-600 hover:text-gray-700">Portraits</a></li>
@@ -213,6 +220,7 @@ const mobileDropdown       = document.querySelector('.mobile-dropdown');
 const mobileDropdownToggle = document.querySelector('.mobile-dropdown-toggle');
 function toggleMobileDropdown(e){
   e.preventDefault();
+  e.stopPropagation();
   mobileDropdown.classList.toggle('open');
 }
 mobileDropdownToggle.addEventListener('touchstart', toggleMobileDropdown);

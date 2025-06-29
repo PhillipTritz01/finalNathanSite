@@ -5,8 +5,40 @@ require_once 'includes/upload_config.php';
 <!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Gallery Settings – CMS Admin</title>
+
+<!-- Apply theme immediately to prevent flash -->
+<script>
+(function() {
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+        document.documentElement.classList.add(saved + '-mode');
+    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.classList.add('dark-mode');
+    } else {
+        document.documentElement.classList.add('light-mode');
+    }
+})();
+</script>
+
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+
+<!-- Bootstrap Icons - Consolidated Loading -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+<!-- Fallback for Bootstrap Icons -->
+<script>
+(function() {
+    const link = document.querySelector('link[href*="bootstrap-icons"]');
+    if (link) {
+        link.onerror = function() {
+            const fallback = document.createElement('link');
+            fallback.rel = 'stylesheet';
+            fallback.href = 'https://unpkg.com/bootstrap-icons@1.11.3/font/bootstrap-icons.css';
+            document.head.appendChild(fallback);
+        };
+    }
+})();
+</script>
 <style>
 :root {
   --bg: #f8f9fa;
@@ -24,7 +56,7 @@ require_once 'includes/upload_config.php';
   --input-bg: #fff;
   --input-text: #222;
 }
-body.dark-mode {
+body.dark-mode, html.dark-mode {
   --bg: #181a1b;
   --text: #e0e0e0;
   --sidebar-bg: #23272b;
@@ -105,7 +137,7 @@ input:focus, textarea:focus, select:focus {
   display: flex;
   align-items: center;
 }
-body.dark-mode .theme-switch {
+body.dark-mode .theme-switch, html.dark-mode .theme-switch {
   background: #444;
 }
 .theme-switch-knob {
@@ -119,7 +151,7 @@ body.dark-mode .theme-switch {
   box-shadow: 0 1px 4px rgba(0,0,0,0.12);
   transition: left 0.3s cubic-bezier(.4,0,.2,1), background 0.3s;
 }
-body.dark-mode .theme-switch-knob {
+body.dark-mode .theme-switch-knob, html.dark-mode .theme-switch-knob {
   left: 31px;
   background: #e0e0e0;
 }
@@ -135,7 +167,7 @@ body.dark-mode .theme-switch-knob {
   left: 6px;
   opacity: 0.5;
 }
-body.dark-mode .theme-switch-knob::before {
+body.dark-mode .theme-switch-knob::before, html.dark-mode .theme-switch-knob::before {
   background: #222;
   opacity: 0.5;
 }
@@ -147,9 +179,19 @@ body.dark-mode .theme-switch-knob::before {
   opacity: 0.95;
   transition: color 0.3s;
 }
-body.dark-mode .gallery-settings-info {
+body.dark-mode .gallery-settings-info, html.dark-mode .gallery-settings-info {
   color: #fff;
   opacity: 0.92;
+}
+
+/* Bootstrap Icons - Simplified */
+.bi {
+    font-family: "bootstrap-icons" !important;
+    font-style: normal !important;
+    font-weight: normal !important;
+    line-height: 1 !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
 }
 </style>
 </head><body>
@@ -164,9 +206,18 @@ body.dark-mode .gallery-settings-info {
 <aside class="col-md-3 col-lg-2 sidebar p-3">
   <h3 class="mb-4">CMS</h3>
   <nav class="nav flex-column">
-    <span class="nav-link text-white fw-bold">Portfolio</span>
-    <a class="nav-link text-white active" href="#">Gallery Settings</a>
-    <a class="nav-link text-white" href="admin.php">Back to Dashboard</a>
+    <span class="nav-link text-white fw-bold">Portfolio Management</span>
+    <a class="nav-link text-white" href="admin.php">Manage Portfolio</a>
+    <a class="nav-link text-white" href="portfolio-overview.php">Portfolio Overview</a>
+    <span class="nav-link text-white fw-bold">Gallery Settings</span>
+                        <span class="nav-link text-white fw-bold mt-3">Page Management</span>
+                    <a class="nav-link text-white" href="page-manager.php">Page Content</a>
+                    <a class="nav-link text-white" href="slideshow-manager.php">Hero Slideshow</a>
+    <span class="nav-link text-white fw-bold mt-3">System</span>
+    <a class="nav-link text-white" href="security-status.php">Security Status</a>
+    <a class="nav-link text-white" href="settings.php">Admin Settings</a>
+    <a class="nav-link text-white" href="performance-monitor.php">Performance Monitor</a>
+    <a class="nav-link text-white" href="maintenance.php">Maintenance</a>
     <a class="nav-link text-white" href="?logout=1">Logout</a>
   </nav>
 </aside>
@@ -205,14 +256,21 @@ body.dark-mode .gallery-settings-info {
   </div>
 </main></div></div>
 <script>
+// Bootstrap Icons loaded via onerror fallback above
+document.addEventListener('DOMContentLoaded', function() {
+    // Icons should be loaded
+});
+
 // Theme toggle logic
 function setTheme(mode) {
+  document.documentElement.classList.remove('light-mode', 'dark-mode');
   document.body.classList.remove('light-mode', 'dark-mode');
+  document.documentElement.classList.add(mode+'-mode');
   document.body.classList.add(mode+'-mode');
   localStorage.setItem('theme', mode);
 }
 function toggleTheme() {
-  const isDark = document.body.classList.contains('dark-mode');
+  const isDark = document.body.classList.contains('dark-mode') || document.documentElement.classList.contains('dark-mode');
   setTheme(isDark ? 'light' : 'dark');
 }
 document.getElementById('themeToggle').onclick = toggleTheme;

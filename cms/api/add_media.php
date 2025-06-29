@@ -4,13 +4,27 @@ require_once '../includes/upload_config.php';   // UPLOAD_DIR & UPLOAD_URL
 
 header('Content-Type: application/json');
 
+// Security headers for API
+SecurityHelper::setSecurityHeaders();
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+  SecurityHelper::logSecurityEvent('INVALID_API_METHOD', 'Non-POST request to add_media API');
   http_response_code(405); echo json_encode(['success'=>false]); exit;
 }
 
+// Validate CSRF token
+$csrfToken = $_POST['csrf_token'] ?? '';
+if (!SecurityHelper::validateCSRF($csrfToken)) {
+  SecurityHelper::logSecurityEvent('API_CSRF_VIOLATION', 'Invalid CSRF token in add_media API');
+  http_response_code(403); echo json_encode(['success'=>false, 'error'=>'Security validation failed']); exit;
+}
+
 /* basic sanity - the JS always sends portfolio_id */
-$itemId = (int)($_POST['portfolio_id'] ?? 0);
-if (!$itemId) { http_response_code(400); echo json_encode(['success'=>false]); exit; }
+$itemId = SecurityHelper::sanitizeInput($_POST['portfolio_id'] ?? 0, 'int');
+if (!$itemId || $itemId <= 0) { 
+  SecurityHelper::logSecurityEvent('INVALID_API_INPUT', 'Invalid portfolio_id in add_media');
+  http_response_code(400); echo json_encode(['success'=>false]); exit; 
+}
 
 /* nothing selected?  → silently succeed so the UI resets */
 if (empty($_FILES['media']['name'][0])) {

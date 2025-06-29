@@ -13,10 +13,10 @@ include 'includes/header.php';
 $conn = getDBConnection();
 $stmt = $conn->prepare("
     SELECT p.*,
-           GROUP_CONCAT(m.media_url ORDER BY m.display_order, m.id SEPARATOR '|||')  AS media_urls,
-           GROUP_CONCAT(m.media_type ORDER BY m.display_order, m.id SEPARATOR '|||') AS media_types
-      FROM portfolio_items  p
- LEFT JOIN portfolio_media  m ON p.id = m.portfolio_item_id
+           GROUP_CONCAT(m.media_url, '|||') AS media_urls,
+           GROUP_CONCAT(m.media_type, '|||') AS media_types
+      FROM portfolio_items p
+ LEFT JOIN portfolio_media m ON p.id = m.portfolio_item_id
      WHERE p.category = 'travel'
   GROUP BY p.id
   ORDER BY p.created_at DESC

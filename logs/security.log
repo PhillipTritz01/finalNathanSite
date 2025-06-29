@@ -1,0 +1,32 @@
+[2025-06-29 06:18:24] SESSION_TIMEOUT | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: Session expired
+[2025-06-29 06:18:34] LOGIN_FAILED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: User: admin, IP: ::1, Attempts: 1
+[2025-06-29 06:18:40] LOGIN_FAILED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: User: admin, IP: ::1, Attempts: 2
+[2025-06-29 06:19:20] LOGIN_FAILED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: User: admin, IP: ::1, Attempts: 3
+[2025-06-29 06:20:10] LOGIN_SUCCESS | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: User: admin, IP: ::1
+[2025-06-29 06:33:34] USERNAME_CHANGED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: From: admin, To: Nathan
+[2025-06-29 06:34:27] PASSWORD_CHANGED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: User: Nathan
+[2025-06-29 06:34:30] LOGOUT | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: Admin logout from settings
+[2025-06-29 06:34:36] LOGIN_SUCCESS | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: User: Nathan, IP: ::1
+[2025-06-29 08:28:01] PAGE_ANIMATION_UPDATED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: Page: home
+[2025-06-29 08:28:08] PAGE_ANIMATION_UPDATED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: Page: home
+[2025-06-29 08:28:19] PAGE_ANIMATION_UPDATED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: Page: about
+[2025-06-29 08:30:32] PAGE_ANIMATION_UPDATED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: Page: about
+[2025-06-29 08:38:09] PAGE_CONTENT_UPDATED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: ID: 3
+[2025-06-29 08:38:22] PAGE_CONTENT_UPDATED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: ID: 3
+[2025-06-29 08:40:05] PAGE_CONTENT_UPDATED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: ID: 3
+[2025-06-29 08:40:38] PAGE_CONTENT_UPDATED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: ID: 22
+[2025-06-29 08:40:45] PAGE_CONTENT_UPDATED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: ID: 22
+[2025-06-29 08:43:35] PAGE_CONTENT_UPDATED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: ID: 22
+[2025-06-29 09:04:00] PAGE_CONTENT_UPDATED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: ID: 22, Value: cms/uploads/d15b49fa897b36fbfc87347457a32a67.jpg
+[2025-06-29 09:04:10] PAGE_CONTENT_UPDATED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: ID: 22, Value: cms/uploads/522e6ed5117827f873dc28cfab3c5d1b.jpg
+[2025-06-29 09:04:34] PAGE_CONTENT_UPDATED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: ID: 3, Value: cms/uploads/2dd2ae8197529e15b8c508e2d605fff9.jpg
+[2025-06-29 09:13:26] SLIDESHOW_STATUS_UPDATED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: ID: 2
+[2025-06-29 09:13:28] SLIDESHOW_STATUS_UPDATED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: ID: 2
+[2025-06-29 09:13:34] SLIDESHOW_IMAGE_DELETED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: ID: 2
+[2025-06-29 09:13:43] SLIDESHOW_IMAGE_ADDED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: URL: uploads/ef3194f762f8e0930dced0780630ef58.jpg
+[2025-06-29 09:13:59] SLIDESHOW_IMAGE_ADDED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: URL: uploads/03edfc979f33b1e357e5752f75447292.jpg
+[2025-06-29 09:19:40] SLIDESHOW_IMAGE_ADDED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: URL: uploads/af51973bfcb50dbb8569c51be33b6dc7.jpg
+[2025-06-29 09:20:04] SLIDESHOW_IMAGE_DELETED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: ID: 3
+[2025-06-29 09:20:07] SLIDESHOW_IMAGE_DELETED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: ID: 4
+[2025-06-29 09:20:41] SLIDESHOW_IMAGE_DELETED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: ID: 7
+[2025-06-29 09:20:46] SLIDESHOW_IMAGE_DELETED | IP: ::1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 | Details: ID: 7
